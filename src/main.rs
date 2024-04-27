@@ -1,8 +1,8 @@
+use crate::column::{Column, ColumnDataType};
+use crate::table::Table;
+
 mod column;
 mod table;
-
-use crate::column::{Column, ColumnDataType, Value};
-use crate::table::Table;
 
 fn main() {
     let columns = vec![
@@ -14,7 +14,7 @@ fn main() {
     let mut table = Table::new("users", columns);
 
     table.show();
-    print!("\n\n\n");
+    print!("\n\n");
 
     let data = vec![
         "1".to_string(),
@@ -27,7 +27,7 @@ fn main() {
     }
 
     table.show();
-    print!("\n\n\n");
+    print!("\n\n");
 
     let data = vec![
         "2".to_string(),
@@ -50,7 +50,7 @@ fn main() {
     }
 
     table.show();
-    print!("\n\n\n");
+    print!("\n\n");
 
     let data = vec![
         "6".to_string(),
