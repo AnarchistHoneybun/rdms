@@ -118,7 +118,7 @@ impl Table {
 
         // Print the column names
         for column in &self.columns {
-            let padded_name = format!("{:<width$}", column.name, width = max_column_name_len);
+            let padded_name = format!("{:>width$}", column.name, width = max_column_name_len);
             print!("{} ", padded_name);
         }
         println!();
@@ -151,6 +151,75 @@ impl Table {
             }
             println!();
         }
+    }
+
+    pub fn select(&self, column_names: Vec<String>) -> Result<(), Error> {
+        if column_names.is_empty() {
+            // If no column names are provided, call the show function
+            self.show();
+            return Ok(());
+        }
+
+        // Check if all provided column names exist in the table
+        let column_names_set: HashSet<String> = column_names.iter().cloned().collect();
+        let existing_columns: HashSet<String> = self.columns.iter().map(|c| c.name.clone()).collect();
+        let non_existing_columns: Vec<String> = column_names_set.difference(&existing_columns).cloned().collect();
+
+        if !non_existing_columns.is_empty() {
+            return Err(Error::NonExistingColumns(non_existing_columns));
+        }
+
+        // Find the maximum length of requested column names
+        let max_column_name_len = column_names
+            .iter()
+            .map(|name| name.len())
+            .max()
+            .unwrap_or(0);
+
+        // Print the requested column names
+        for column_name in &column_names {
+            let padded_name = format!("{:>width$}", column_name, width = max_column_name_len);
+            print!("{} ", padded_name);
+        }
+        println!();
+
+        // Print a separator line
+        let separator_line: String = std::iter::repeat("-")
+            .take(max_column_name_len * column_names.len() + column_names.len() - 1)
+            .collect();
+        println!("{}", separator_line);
+
+        // Get the maximum number of rows across the requested columns
+        let max_rows = column_names
+            .iter()
+            .map(|name| {
+                self.columns
+                    .iter()
+                    .find(|c| c.name == *name)
+                    .map(|c| c.data.len())
+                    .unwrap_or(0)
+            })
+            .max()
+            .unwrap_or(0);
+
+        // Print the data rows for the requested columns
+        for row_idx in 0..max_rows {
+            for column_name in &column_names {
+                if let Some(column) = self.columns.iter().find(|c| c.name == *column_name) {
+                    if row_idx < column.data.len() {
+                        let value = &column.data[row_idx];
+                        let padded_value = format!("{:>width$}", value, width = max_column_name_len);
+                        print!("{} ", padded_value);
+                    } else {
+                        let padding = " ".repeat(max_column_name_len);
+                        print!("{} ", padding);
+                    }
+                }
+            }
+            println!();
+        }
+
+        Ok(())
     }
 
     pub fn describe(&self) {

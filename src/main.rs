@@ -11,109 +11,51 @@ fn main() {
         Column::new("age", ColumnDataType::Integer, None),
     ];
 
-    let mut table = Table::new("users", columns);
+    let mut users_table = Table::new("users", columns);
 
-    table.show();
+    users_table.show();
     print!("\n\n");
 
-    let data = vec![
-        "1".to_string(),
-        "Alice".to_string(),
-        "27".to_string(),
+    let all_data = vec![
+        vec!["1".to_string(), "Alice".to_string(), "27".to_string()],
+        vec!["2".to_string(), "Bob".to_string(), "35".to_string()],
+        vec!["3".to_string(), "Joe".to_string(), "19".to_string()],
+        vec!["6".to_string(),"Maleficent".to_string(),"invalid".to_string()],
+        vec!["4".to_string(), "NULL".to_string(), "17".to_string()],
+        vec!["5".to_string(), "Steve".to_string(), "40".to_string()],
     ];
 
-    if let Err(err) = table.insert(data) {
-        println!("Error inserting data: {}", err);
+    for data in all_data {
+        if let Err(err) = users_table.insert(data.clone()) {
+            println!("Error inserting data: {}", err);
+        }
     }
-
-    table.show();
+    users_table.show();
     print!("\n\n");
 
-    let data = vec![
-        "2".to_string(),
-        "Bob".to_string(),
-        "35".to_string(),
-    ];
+    let column_names = vec!["user_id".to_string(), "age".to_string()];
+    let data = vec!["6".to_string(), "31".to_string()];
 
-    if let Err(err) = table.insert(data) {
+    if let Err(err) = users_table.insert_with_columns(column_names, data) {
         println!("Error inserting data: {}", err);
     }
 
-    let data = vec![
-        "3".to_string(),
-        "Joe".to_string(),
-        "19".to_string(),
-    ];
-
-    if let Err(err) = table.insert(data) {
-        println!("Error inserting data: {}", err);
-    }
-
-    table.show();
-    print!("\n\n");
-
-    let data = vec![
-        "6".to_string(),
-        "Maleficent".to_string(),
-        "invalid".to_string(), // This will cause a parsing error
-    ];
-
-    if let Err(err) = table.insert(data) {
-        println!("Error inserting data: {}", err);
-    }
-
-    let data = vec![
-        "4".to_string(),
-        "NULL".to_string(), // This will be treated as a null value
-        "17".to_string(),
-    ];
-
-    if let Err(err) = table.insert(data) {
-        println!("Error inserting data: {}", err);
-    }
-
-    let data = vec![
-        "5".to_string(),
-        "Steve".to_string(), // This will be treated as a null value
-        "40".to_string(),
-    ];
-
-    if let Err(err) = table.insert(data) {
-        println!("Error inserting data: {}", err);
-    }
-
-    table.show();
+    users_table.show();
     print!("\n\n");
 
     let column_names = vec![
         "user_id".to_string(),
         "age".to_string(),
     ];
-    let data = vec![
-        "6".to_string(),
-        "31".to_string(),
-    ];
 
-    if let Err(err) = table.insert_with_columns(column_names, data) {
-        println!("Error inserting data: {}", err);
+    if let Err(err) = users_table.select(column_names) {
+        println!("Error selecting data: {}", err);
     }
 
-    let column_names = vec![
-        "id".to_string(),
-        "age".to_string(),
-        "non_existing_column".to_string(), // This will cause an error
-    ];
-    let data = vec![
-        "1".to_string(),
-        "30".to_string(),
-    ];
-
-    if let Err(err) = table.insert_with_columns(column_names, data) {
-        println!("Error inserting data: {}", err);
+    if let Err(err) = users_table.select(vec![]) {
+        println!("Error selecting data: {}", err);
     }
 
-    table.show();
-    print!("\n\n");
 
-    table.describe();
+    users_table.describe();
 }
