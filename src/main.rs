@@ -61,4 +61,6 @@ fn main() {
     if let Err(err) = table.insert(data) {
         println!("Error inserting data: {}", err);
     }
+
+    table.describe();
 }

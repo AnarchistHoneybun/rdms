@@ -7,6 +7,17 @@ pub enum ColumnDataType {
     Text,
 }
 
+impl fmt::Display for ColumnDataType {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            ColumnDataType::Integer => write!(f, "Integer"),
+            ColumnDataType::Float => write!(f, "Float"),
+            ColumnDataType::Text => write!(f, "Text"),
+            // Add other data types as needed
+        }
+    }
+}
+
 #[derive(Debug)]
 pub enum Value {
     Integer(i64),

@@ -105,4 +105,38 @@ impl Table {
             println!();
         }
     }
+
+    pub fn describe(&self) {
+        println!("Table: {}", self.name);
+        println!();
+
+        // Find the maximum length of column names
+        let max_column_name_len = self
+            .columns
+            .iter()
+            .map(|column| column.name.len())
+            .max()
+            .unwrap_or(0);
+
+        // Print the column names
+        for column in &self.columns {
+            let padded_name = format!("{:<width$}", column.name, width = max_column_name_len);
+            print!("{} ", padded_name);
+        }
+        println!();
+
+        // Print a separator line
+        let separator_line: String = std::iter::repeat("-")
+            .take(max_column_name_len * self.columns.len() + self.columns.len() - 1)
+            .collect();
+        println!("{}", separator_line);
+
+        // Print the data types
+        for column in &self.columns {
+            let data_type_name = format!("{}", column.data_type);
+            let padded_data_type = format!("{:<width$}", data_type_name, width = max_column_name_len);
+            print!("{} ", padded_data_type);
+        }
+        println!();
+    }
 }
