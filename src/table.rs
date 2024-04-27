@@ -1,10 +1,11 @@
 use crate::column::{Column, ColumnDataType, Value};
-use std::fmt;
+use std::{fmt, collections::HashSet};
 
 #[derive(Debug)]
 pub enum Error {
     MismatchedColumnCount,
     ParseError(usize, String),
+    NonExistingColumns(Vec<String>),
 }
 
 impl fmt::Display for Error {
@@ -12,6 +13,7 @@ impl fmt::Display for Error {
         match self {
             Error::MismatchedColumnCount => write!(f, "Number of values doesn't match the number of columns"),
             Error::ParseError(index, value) => write!(f, "Failed to parse value '{}' at index {}", value, index),
+            Error::NonExistingColumns(columns) => write!(f, "The following columns do not exist: {}", columns.join(", ")),
         }
     }
 }
@@ -53,6 +55,47 @@ impl Table {
                         Err(_) => return Err(Error::ParseError(parsed_values.len(), value_str)),
                     },
                     ColumnDataType::Text => parsed_values.push(Value::Text(value_str)),
+                }
+            }
+        }
+
+        for (column, value) in self.columns.iter_mut().zip(parsed_values.into_iter()) {
+            column.data.push(value);
+        }
+
+        Ok(())
+    }
+
+    pub fn insert_with_columns(&mut self, column_names: Vec<String>, data: Vec<String>) -> Result<(), Error> {
+        // Check if all provided column names exist in the table
+        let column_names_set: HashSet<String> = column_names.iter().cloned().collect();
+        let existing_columns: HashSet<String> = self.columns.iter().map(|c| c.name.clone()).collect();
+        let non_existing_columns: Vec<String> = column_names_set.difference(&existing_columns).cloned().collect();
+
+        if !non_existing_columns.is_empty() {
+            return Err(Error::NonExistingColumns(non_existing_columns));
+        }
+
+        // Check if the number of data items matches the number of provided column names
+        if data.len() != column_names.len() {
+            return Err(Error::MismatchedColumnCount);
+        }
+
+        let mut parsed_values: Vec<Value> = vec![Value::Null; self.columns.len()];
+
+        for (column_name, value_str) in column_names.iter().zip(data.into_iter()) {
+            if let Some(column_idx) = self.columns.iter().position(|c| c.name == *column_name) {
+                let column = &self.columns[column_idx];
+                match column.data_type {
+                    ColumnDataType::Integer => match value_str.parse::<i64>() {
+                        Ok(value) => parsed_values[column_idx] = Value::Integer(value),
+                        Err(_) => return Err(Error::ParseError(column_idx, value_str)),
+                    },
+                    ColumnDataType::Float => match value_str.parse::<f64>() {
+                        Ok(value) => parsed_values[column_idx] = Value::Float(value),
+                        Err(_) => return Err(Error::ParseError(column_idx, value_str)),
+                    },
+                    ColumnDataType::Text => parsed_values[column_idx] = Value::Text(value_str),
                 }
             }
         }

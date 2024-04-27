@@ -85,5 +85,35 @@ fn main() {
     table.show();
     print!("\n\n");
 
+    let column_names = vec![
+        "user_id".to_string(),
+        "age".to_string(),
+    ];
+    let data = vec![
+        "6".to_string(),
+        "31".to_string(),
+    ];
+
+    if let Err(err) = table.insert_with_columns(column_names, data) {
+        println!("Error inserting data: {}", err);
+    }
+
+    let column_names = vec![
+        "id".to_string(),
+        "age".to_string(),
+        "non_existing_column".to_string(), // This will cause an error
+    ];
+    let data = vec![
+        "1".to_string(),
+        "30".to_string(),
+    ];
+
+    if let Err(err) = table.insert_with_columns(column_names, data) {
+        println!("Error inserting data: {}", err);
+    }
+
+    table.show();
+    print!("\n\n");
+
     table.describe();
 }

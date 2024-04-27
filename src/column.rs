@@ -18,7 +18,7 @@ impl fmt::Display for ColumnDataType {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub enum Value {
     Integer(i64),
     Float(f64),
