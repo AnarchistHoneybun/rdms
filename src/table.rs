@@ -1,4 +1,22 @@
-use crate::column::{Column, Value};
+use crate::column::{Column, ColumnDataType, Value};
+use std::fmt;
+
+#[derive(Debug)]
+pub enum Error {
+    MismatchedColumnCount,
+    ParseError(usize, String),
+}
+
+impl fmt::Display for Error {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Error::MismatchedColumnCount => write!(f, "Number of values doesn't match the number of columns"),
+            Error::ParseError(index, value) => write!(f, "Failed to parse value '{}' at index {}", value, index),
+        }
+    }
+}
+
+impl std::error::Error for Error {}
 
 #[derive(Debug)]
 pub struct Table {
@@ -14,12 +32,28 @@ impl Table {
         }
     }
 
-    pub fn insert(&mut self, data: Vec<Value>) -> Result<(), &'static str> {
+    pub fn insert(&mut self, data: Vec<String>) -> Result<(), Error> {
         if data.len() != self.columns.len() {
-            panic!("Data length does not match column length");
+            return Err(Error::MismatchedColumnCount);
         }
 
-        for (column, value) in self.columns.iter_mut().zip(data.into_iter()) {
+        let mut parsed_values: Vec<Value> = Vec::with_capacity(self.columns.len());
+
+        for (column, value_str) in self.columns.iter().zip(data.into_iter()) {
+            match column.data_type {
+                ColumnDataType::Integer => match value_str.parse::<i64>() {
+                    Ok(value) => parsed_values.push(Value::Integer(value)),
+                    Err(_) => return Err(Error::ParseError(parsed_values.len(), value_str)),
+                },
+                ColumnDataType::Float => match value_str.parse::<f64>() {
+                    Ok(value) => parsed_values.push(Value::Float(value)),
+                    Err(_) => return Err(Error::ParseError(parsed_values.len(), value_str)),
+                },
+                ColumnDataType::Text => parsed_values.push(Value::Text(value_str)),
+            }
+        }
+
+        for (column, value) in self.columns.iter_mut().zip(parsed_values.into_iter()) {
             column.data.push(value);
         }
 

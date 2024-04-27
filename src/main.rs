@@ -17,9 +17,9 @@ fn main() {
     print!("\n\n\n");
 
     let data = vec![
-        Value::Integer(1),
-        Value::Text("Alice".to_string()),
-        Value::Integer(30),
+        "1".to_string(),
+        "Alice".to_string(),
+        "27".to_string(),
     ];
 
     if let Err(err) = table.insert(data) {
@@ -30,23 +30,35 @@ fn main() {
     print!("\n\n\n");
 
     let data = vec![
-        Value::Integer(2),
-        Value::Text("Bob".to_string()),
-        Value::Integer(11),
+        "2".to_string(),
+        "Bob".to_string(),
+        "35".to_string(),
     ];
+
     if let Err(err) = table.insert(data) {
         println!("Error inserting data: {}", err);
     }
 
     let data = vec![
-        Value::Integer(3),
-        Value::Text("Joe".to_string()),
-        Value::Integer(25),
+        "3".to_string(),
+        "Joe".to_string(),
+        "19".to_string(),
     ];
+
     if let Err(err) = table.insert(data) {
         println!("Error inserting data: {}", err);
     }
 
     table.show();
     print!("\n\n\n");
+
+    let data = vec![
+        "6".to_string(),
+        "Maleficent".to_string(),
+        "invalid".to_string(), // This will cause a parsing error
+    ];
+
+    if let Err(err) = table.insert(data) {
+        println!("Error inserting data: {}", err);
+    }
 }
