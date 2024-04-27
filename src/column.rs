@@ -23,13 +23,7 @@ pub enum Value {
     Integer(i64),
     Float(f64),
     Text(String),
-}
-
-#[derive(Debug)]
-pub struct Column {
-    pub name: String,
-    pub data_type: ColumnDataType,
-    pub data: Vec<Value>,
+    Null,
 }
 
 impl fmt::Display for Value {
@@ -53,9 +47,22 @@ impl fmt::Display for Value {
                 value,
                 width = f.width().unwrap_or_default()
             ),
+            Value::Null => write!(
+                f,
+                "{:>width$}",
+                "NULL",
+                width = f.width().unwrap_or_default()
+            ),
             // Add other variants as needed
         }
     }
+}
+
+#[derive(Debug)]
+pub struct Column {
+    pub name: String,
+    pub data_type: ColumnDataType,
+    pub data: Vec<Value>,
 }
 
 impl Column {

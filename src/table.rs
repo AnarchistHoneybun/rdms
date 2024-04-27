@@ -40,16 +40,20 @@ impl Table {
         let mut parsed_values: Vec<Value> = Vec::with_capacity(self.columns.len());
 
         for (column, value_str) in self.columns.iter().zip(data.into_iter()) {
-            match column.data_type {
-                ColumnDataType::Integer => match value_str.parse::<i64>() {
-                    Ok(value) => parsed_values.push(Value::Integer(value)),
-                    Err(_) => return Err(Error::ParseError(parsed_values.len(), value_str)),
-                },
-                ColumnDataType::Float => match value_str.parse::<f64>() {
-                    Ok(value) => parsed_values.push(Value::Float(value)),
-                    Err(_) => return Err(Error::ParseError(parsed_values.len(), value_str)),
-                },
-                ColumnDataType::Text => parsed_values.push(Value::Text(value_str)),
+            if value_str.trim().to_lowercase() == "null" {
+                parsed_values.push(Value::Null);
+            } else {
+                match column.data_type {
+                    ColumnDataType::Integer => match value_str.parse::<i64>() {
+                        Ok(value) => parsed_values.push(Value::Integer(value)),
+                        Err(_) => return Err(Error::ParseError(parsed_values.len(), value_str)),
+                    },
+                    ColumnDataType::Float => match value_str.parse::<f64>() {
+                        Ok(value) => parsed_values.push(Value::Float(value)),
+                        Err(_) => return Err(Error::ParseError(parsed_values.len(), value_str)),
+                    },
+                    ColumnDataType::Text => parsed_values.push(Value::Text(value_str)),
+                }
             }
         }
 

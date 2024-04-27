@@ -62,5 +62,28 @@ fn main() {
         println!("Error inserting data: {}", err);
     }
 
+    let data = vec![
+        "4".to_string(),
+        "NULL".to_string(), // This will be treated as a null value
+        "17".to_string(),
+    ];
+
+    if let Err(err) = table.insert(data) {
+        println!("Error inserting data: {}", err);
+    }
+
+    let data = vec![
+        "5".to_string(),
+        "Steve".to_string(), // This will be treated as a null value
+        "40".to_string(),
+    ];
+
+    if let Err(err) = table.insert(data) {
+        println!("Error inserting data: {}", err);
+    }
+
+    table.show();
+    print!("\n\n");
+
     table.describe();
 }
