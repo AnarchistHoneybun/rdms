@@ -1,5 +1,8 @@
 use crate::column::{Column, ColumnDataType, Value};
-use std::{fmt, collections::HashSet};
+use std::fs::File;
+use std::io::{BufWriter, Write};
+use std::path::Path;
+use std::{collections::HashSet, fmt};
 
 #[derive(Debug, PartialEq)]
 enum Operator {
@@ -29,17 +32,31 @@ pub enum Error {
     ParseError(usize, String),
     NonExistingColumns(Vec<String>),
     NonExistingColumn(String), // column_name
-    InvalidOperator(String), // operator_str
+    InvalidOperator(String),   // operator_str
+    FileError(String),
+    InvalidFormat(String),
 }
 
 impl fmt::Display for Error {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
-            Error::MismatchedColumnCount => write!(f, "Number of values doesn't match the number of columns"),
-            Error::ParseError(index, value) => write!(f, "Failed to parse value '{}' at index {}", value, index),
-            Error::NonExistingColumns(columns) => write!(f, "The following columns do not exist: {}", columns.join(", ")),
-            Error::NonExistingColumn(column_name) => write!(f, "The column '{}' does not exist", column_name),
+            Error::MismatchedColumnCount => {
+                write!(f, "Number of values doesn't match the number of columns")
+            }
+            Error::ParseError(index, value) => {
+                write!(f, "Failed to parse value '{}' at index {}", value, index)
+            }
+            Error::NonExistingColumns(columns) => write!(
+                f,
+                "The following columns do not exist: {}",
+                columns.join(", ")
+            ),
+            Error::NonExistingColumn(column_name) => {
+                write!(f, "The column '{}' does not exist", column_name)
+            }
             Error::InvalidOperator(operator_str) => write!(f, "Invalid operator: {}", operator_str),
+            Error::FileError(msg) => write!(f, "File error: {}", msg),
+            Error::InvalidFormat(format) => write!(f, "Invalid format: {}", format),
         }
     }
 }
@@ -107,11 +124,19 @@ impl Table {
         Ok(())
     }
 
-    pub fn insert_with_columns(&mut self, column_names: Vec<String>, data: Vec<String>) -> Result<(), Error> {
+    pub fn insert_with_columns(
+        &mut self,
+        column_names: Vec<String>,
+        data: Vec<String>,
+    ) -> Result<(), Error> {
         // Check if all provided column names exist in the table
         let column_names_set: HashSet<String> = column_names.iter().cloned().collect();
-        let existing_columns: HashSet<String> = self.columns.iter().map(|c| c.name.clone()).collect();
-        let non_existing_columns: Vec<String> = column_names_set.difference(&existing_columns).cloned().collect();
+        let existing_columns: HashSet<String> =
+            self.columns.iter().map(|c| c.name.clone()).collect();
+        let non_existing_columns: Vec<String> = column_names_set
+            .difference(&existing_columns)
+            .cloned()
+            .collect();
 
         if !non_existing_columns.is_empty() {
             return Err(Error::NonExistingColumns(non_existing_columns));
@@ -148,51 +173,89 @@ impl Table {
         Ok(())
     }
 
-    pub fn update(&mut self, update_input: (String, String), condition_input: Option<(String, String, String)>) -> Result<(), Error> {
+    pub fn update(
+        &mut self,
+        update_input: (String, String),
+        condition_input: Option<(String, String, String)>,
+    ) -> Result<(), Error> {
         // Validate column name in update_input
-        let update_column = self.columns.iter().find(|c| c.name == update_input.0).ok_or(Error::NonExistingColumn(update_input.0.clone()))?;
+        let update_column = self
+            .columns
+            .iter()
+            .find(|c| c.name == update_input.0)
+            .ok_or(Error::NonExistingColumn(update_input.0.clone()))?;
 
         // Parse new_value according to the column's data type
         let new_value = match update_column.data_type {
-            ColumnDataType::Integer => update_input.1.parse::<i64>().map(Value::Integer).map_err(|_| Error::ParseError(1, update_input.1.clone()))?,
-            ColumnDataType::Float => update_input.1.parse::<f64>().map(Value::Float).map_err(|_| Error::ParseError(1, update_input.1.clone()))?,
+            ColumnDataType::Integer => update_input
+                .1
+                .parse::<i64>()
+                .map(Value::Integer)
+                .map_err(|_| Error::ParseError(1, update_input.1.clone()))?,
+            ColumnDataType::Float => update_input
+                .1
+                .parse::<f64>()
+                .map(Value::Float)
+                .map_err(|_| Error::ParseError(1, update_input.1.clone()))?,
             ColumnDataType::Text => Value::Text(update_input.1),
         };
 
-        let update_column_name = self.columns.iter().find(|c| c.name == update_input.0).ok_or(Error::NonExistingColumn(update_input.0.clone()))?.name.clone();
+        let update_column_name = self
+            .columns
+            .iter()
+            .find(|c| c.name == update_input.0)
+            .ok_or(Error::NonExistingColumn(update_input.0.clone()))?
+            .name
+            .clone();
 
         let columns_clone = self.columns.clone();
 
         if let Some((cond_column_name, cond_value, operator_str)) = condition_input {
-
             // Validate condition column name
-            let cond_column_data_type = self.columns.iter().find(|c| c.name == cond_column_name).ok_or(Error::NonExistingColumn(cond_column_name.clone()))?.data_type.clone();
+            let cond_column_data_type = self
+                .columns
+                .iter()
+                .find(|c| c.name == cond_column_name)
+                .ok_or(Error::NonExistingColumn(cond_column_name.clone()))?
+                .data_type
+                .clone();
 
             // Parse the operator
-            let operator = Operator::from_str(&operator_str).map_err(|_e| Error::InvalidOperator(operator_str))?;
-
+            let operator = Operator::from_str(&operator_str)
+                .map_err(|_e| Error::InvalidOperator(operator_str))?;
 
             // Update records based on the condition
             for record in &mut self.columns {
                 if record.name == update_column_name {
-                    record.data = record.data.iter().enumerate().filter_map(|(i, value)| {
-                        // find the value of the conditional column for this record
-                        let ref_value = match columns_clone.iter().find(|c| c.name == cond_column_name) {
-                            Some(column) => column.data.get(i),
-                            None => None,
-                        };
-                        // change the cond_value from a option to a Value type
-                        let ref_value = match ref_value {
-                            Some(value) => value,
-                            None => return None,
-                        };
+                    record.data = record
+                        .data
+                        .iter()
+                        .enumerate()
+                        .filter_map(|(i, value)| {
+                            // find the value of the conditional column for this record
+                            let ref_value =
+                                match columns_clone.iter().find(|c| c.name == cond_column_name) {
+                                    Some(column) => column.data.get(i),
+                                    None => None,
+                                };
+                            // change the cond_value from a option to a Value type
+                            let ref_value = match ref_value {
+                                Some(value) => value,
+                                None => return None,
+                            };
 
-                        if satisfies_condition(ref_value, cond_column_data_type, &cond_value, &operator) {
-                            Some(new_value.clone())
-                        } else {
-                            Some(value.clone())
-                        }
-                    }).collect();
+                            if satisfies_condition(
+                                ref_value,
+                                cond_column_data_type,
+                                &cond_value,
+                                &operator,
+                            ) {
+                                Some(new_value.clone())
+                            } else {
+                                Some(value.clone())
+                            }
+                        })
+                        .collect();
                 }
             }
         } else {
@@ -262,8 +325,12 @@ impl Table {
 
         // Check if all provided column names exist in the table
         let column_names_set: HashSet<String> = column_names.iter().cloned().collect();
-        let existing_columns: HashSet<String> = self.columns.iter().map(|c| c.name.clone()).collect();
-        let non_existing_columns: Vec<String> = column_names_set.difference(&existing_columns).cloned().collect();
+        let existing_columns: HashSet<String> =
+            self.columns.iter().map(|c| c.name.clone()).collect();
+        let non_existing_columns: Vec<String> = column_names_set
+            .difference(&existing_columns)
+            .cloned()
+            .collect();
 
         if !non_existing_columns.is_empty() {
             return Err(Error::NonExistingColumns(non_existing_columns));
@@ -308,7 +375,8 @@ impl Table {
                 if let Some(column) = self.columns.iter().find(|c| c.name == *column_name) {
                     if row_idx < column.data.len() {
                         let value = &column.data[row_idx];
-                        let padded_value = format!("{:>width$}", value, width = max_column_name_len);
+                        let padded_value =
+                            format!("{:>width$}", value, width = max_column_name_len);
                         print!("{} ", padded_value);
                     } else {
                         let padding = " ".repeat(max_column_name_len);
@@ -350,7 +418,8 @@ impl Table {
         // Print the data types
         for column in &self.columns {
             let data_type_name = format!("{}", column.data_type);
-            let padded_data_type = format!("{:<width$}", data_type_name, width = max_column_name_len);
+            let padded_data_type =
+                format!("{:<width$}", data_type_name, width = max_column_name_len);
             print!("{} ", padded_data_type);
         }
         println!();
@@ -361,7 +430,11 @@ impl Table {
             // Check if the provided column name exists
             if let Some(column) = self.columns.iter().find(|c| c.name == column_name) {
                 // Count the non-null values in the specified column
-                let non_null_count = column.data.iter().filter(|v| !matches!(v, Value::Null)).count();
+                let non_null_count = column
+                    .data
+                    .iter()
+                    .filter(|v| !matches!(v, Value::Null))
+                    .count();
                 Ok(non_null_count)
             } else {
                 Err(Error::NonExistingColumn(column_name))
@@ -375,11 +448,147 @@ impl Table {
                 .max()
                 .unwrap_or(0);
             Ok(max_rows)
+        };
+    }
+
+    pub fn export_table(&self, file_name: &str, format: &str) -> Result<(), Error> {
+        let path = Path::new(file_name);
+        let file = match File::create(path) {
+            Ok(file) => file,
+            Err(e) => return Err(Error::FileError(format!("Failed to create file: {}", e))),
+        };
+        let mut writer = BufWriter::new(file);
+
+        match format.to_lowercase().as_str() {
+            "csv" => {
+                // Write column names as header
+                let header = self
+                    .columns
+                    .iter()
+                    .map(|c| c.name.clone())
+                    .collect::<Vec<_>>()
+                    .join(",");
+                writer
+                    .write_all(header.as_bytes())
+                    .map_err(|e| Error::FileError(format!("Failed to write to file: {}", e)))?;
+                writer
+                    .write_all(b"\n")
+                    .map_err(|e| Error::FileError(format!("Failed to write to file: {}", e)))?;
+
+                // Write data rows
+                let max_rows = self
+                    .columns
+                    .iter()
+                    .map(|column| column.data.len())
+                    .max()
+                    .unwrap_or(0);
+
+                for row_idx in 0..max_rows {
+                    let row_data: Vec<String> = self
+                        .columns
+                        .iter()
+                        .map(|column| {
+                            if row_idx < column.data.len() {
+                                format!("{}", column.data[row_idx])
+                            } else {
+                                "".to_string()
+                            }
+                        })
+                        .collect();
+
+                    let row_string = row_data.join(",");
+                    writer
+                        .write_all(row_string.as_bytes())
+                        .map_err(|e| Error::FileError(format!("Failed to write to file: {}", e)))?;
+                    writer
+                        .write_all(b"\n")
+                        .map_err(|e| Error::FileError(format!("Failed to write to file: {}", e)))?;
+                }
+            }
+            "txt" => {
+                // Find the maximum length of column names
+                let max_column_name_len = self
+                    .columns
+                    .iter()
+                    .map(|column| column.name.len())
+                    .max()
+                    .unwrap_or(0);
+
+                // Print the column names
+                for column in &self.columns {
+                    let padded_name =
+                        format!("{:>width$}", column.name, width = max_column_name_len);
+                    writer
+                        .write_all(padded_name.as_bytes())
+                        .map_err(|e| Error::FileError(format!("Failed to write to file: {}", e)))?;
+                    writer
+                        .write_all(b" ")
+                        .map_err(|e| Error::FileError(format!("Failed to write to file: {}", e)))?;
+                }
+                writer
+                    .write_all(b"\n")
+                    .map_err(|e| Error::FileError(format!("Failed to write to file: {}", e)))?;
+
+                // Print a separator line
+                let separator_line: String = std::iter::repeat("-")
+                    .take(max_column_name_len * self.columns.len() + self.columns.len() - 1)
+                    .collect();
+                writer
+                    .write_all(separator_line.as_bytes())
+                    .map_err(|e| Error::FileError(format!("Failed to write to file: {}", e)))?;
+                writer
+                    .write_all(b"\n")
+                    .map_err(|e| Error::FileError(format!("Failed to write to file: {}", e)))?;
+
+                // Get the maximum number of rows across all columns
+                let max_rows = self
+                    .columns
+                    .iter()
+                    .map(|column| column.data.len())
+                    .max()
+                    .unwrap_or(0);
+
+                // Print the data rows
+                for row_idx in 0..max_rows {
+                    for (_col_idx, column) in self.columns.iter().enumerate() {
+                        if row_idx < column.data.len() {
+                            let value = &column.data[row_idx];
+                            let padded_value =
+                                format!("{:<width$}", value, width = max_column_name_len);
+                            writer.write_all(padded_value.as_bytes()).map_err(|e| {
+                                Error::FileError(format!("Failed to write to file: {}", e))
+                            })?;
+                            writer.write_all(b" ").map_err(|e| {
+                                Error::FileError(format!("Failed to write to file: {}", e))
+                            })?;
+                        } else {
+                            let padding = " ".repeat(max_column_name_len);
+                            writer.write_all(padding.as_bytes()).map_err(|e| {
+                                Error::FileError(format!("Failed to write to file: {}", e))
+                            })?;
+                            writer.write_all(b" ").map_err(|e| {
+                                Error::FileError(format!("Failed to write to file: {}", e))
+                            })?;
+                        }
+                    }
+                    writer
+                        .write_all(b"\n")
+                        .map_err(|e| Error::FileError(format!("Failed to write to file: {}", e)))?;
+                }
+            }
+            _ => return Err(Error::InvalidFormat(format.to_string())),
         }
+
+        Ok(())
     }
 }
 
-fn satisfies_condition(value: &Value, cond_column_data_type: ColumnDataType, cond_value: &str, operator: &Operator) -> bool {
+fn satisfies_condition(
+    value: &Value,
+    cond_column_data_type: ColumnDataType,
+    cond_value: &str,
+    operator: &Operator,
+) -> bool {
     match (value, &cond_column_data_type) {
         (Value::Integer(val), ColumnDataType::Integer) => {
             let cond_value: i64 = cond_value.parse().unwrap();
