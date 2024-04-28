@@ -146,11 +146,12 @@ impl Table {
 
         let update_column_name = self.columns.iter().find(|c| c.name == update_input.0).ok_or(Error::NonExistingColumn(update_input.0.clone()))?.name.clone();
 
+        let columns_clone = self.columns.clone();
 
         if let Some((cond_column_name, cond_value, operator_str)) = condition_input {
 
             // Validate condition column name
-            let cond_column_data_type = self.columns.iter().find(|c| c.name == cond_column_name).ok_or(Error::NonExistingColumn(cond_column_name))?.data_type.clone();
+            let cond_column_data_type = self.columns.iter().find(|c| c.name == cond_column_name).ok_or(Error::NonExistingColumn(cond_column_name.clone()))?.data_type.clone();
 
             // Parse the operator
             let operator = Operator::from_str(&operator_str).map_err(|e| Error::InvalidOperator(operator_str))?;
@@ -160,7 +161,18 @@ impl Table {
             for record in &mut self.columns {
                 if record.name == update_column_name {
                     record.data = record.data.iter().enumerate().filter_map(|(i, value)| {
-                        if satisfies_condition(value, cond_column_data_type, &cond_value, &operator) {
+                        // find the value of the conditional column for this record
+                        let ref_value = match columns_clone.iter().find(|c| c.name == cond_column_name) {
+                            Some(column) => column.data.get(i),
+                            None => None,
+                        };
+                        // change the cond_value from a option to a Value type
+                        let ref_value = match ref_value {
+                            Some(value) => value,
+                            None => return None,
+                        };
+
+                        if satisfies_condition(ref_value, cond_column_data_type, &cond_value, &operator) {
                             Some(new_value.clone())
                         } else {
                             Some(value.clone())

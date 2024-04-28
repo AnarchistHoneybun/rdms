@@ -65,7 +65,7 @@ fn main() {
     users_table.show();
 
     // Update a column based on a condition
-    let update_input = ("user_id".to_string(), "7".to_string());
+    let update_input = ("user_name".to_string(), "Price".to_string());
     let condition_input = ("user_id".to_string(), "3".to_string(), "=".to_string());
     if let Err(err) = users_table.update(update_input, Some(condition_input)) {
         println!("Error updating data: {}", err);
