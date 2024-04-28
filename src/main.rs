@@ -89,6 +89,8 @@ fn main() {
     } else {
         println!("Total non-null names: {}", non_null_names.unwrap());
     }
+    
+    users_table.export_table("users.csv", "csv").unwrap();
 
 
     users_table.describe();
