@@ -73,6 +73,22 @@ fn main() {
     }
 
     users_table.show();
+    
+    let total_records = users_table.count(None);
+
+    if let Err(err) = total_records {
+        println!("Error counting records: {}", err);
+    } else {
+        println!("Total records: {}", total_records.unwrap());
+    }
+
+    let non_null_names = users_table.count(Some("user_name".to_string()));
+
+    if let Err(err) = non_null_names {
+        println!("Error counting records: {}", err);
+    } else {
+        println!("Total non-null names: {}", non_null_names.unwrap());
+    }
 
 
     users_table.describe();
