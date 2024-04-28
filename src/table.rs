@@ -154,7 +154,7 @@ impl Table {
             let cond_column_data_type = self.columns.iter().find(|c| c.name == cond_column_name).ok_or(Error::NonExistingColumn(cond_column_name.clone()))?.data_type.clone();
 
             // Parse the operator
-            let operator = Operator::from_str(&operator_str).map_err(|e| Error::InvalidOperator(operator_str))?;
+            let operator = Operator::from_str(&operator_str).map_err(|_e| Error::InvalidOperator(operator_str))?;
 
 
             // Update records based on the condition
@@ -224,7 +224,7 @@ impl Table {
 
         // Print the data rows
         for row_idx in 0..max_rows {
-            for (col_idx, column) in self.columns.iter().enumerate() {
+            for (_col_idx, column) in self.columns.iter().enumerate() {
                 if row_idx < column.data.len() {
                     let value = &column.data[row_idx];
                     let padded_value = format!("{:<width$}", value, width = max_column_name_len);
