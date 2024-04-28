@@ -179,4 +179,47 @@ mod tests {
         let result = table.count(Some("invalid".to_string()));
         assert!(matches!(result, Err(Error::NonExistingColumn(_))));
     }
+
+    #[test]
+    fn test_copy() {
+        let mut original_table = Table::new(
+            "test_table",
+            vec![
+                Column::new("id", ColumnDataType::Integer, None),
+                Column::new("name", ColumnDataType::Text, None),
+                Column::new("score", ColumnDataType::Float, None),
+            ],
+        );
+
+        // Insert some initial data
+        original_table
+            .insert(vec!["1".to_string(), "Alice".to_string(), "85.5".to_string()])
+            .unwrap();
+        original_table
+            .insert(vec!["2".to_string(), "Bob".to_string(), "92.0".to_string()])
+            .unwrap();
+        original_table
+            .insert(vec!["3".to_string(), "Charlie".to_string(), "75.0".to_string()])
+            .unwrap();
+
+        // Create a copy of the table
+        let copied_table = original_table.copy();
+
+        // Check if the copied table has the same columns and data
+        assert_eq!(copied_table.name, original_table.name);
+        assert_eq!(copied_table.columns.len(), original_table.columns.len());
+
+        for (original_column, copied_column) in original_table.columns.iter().zip(copied_table.columns.iter()) {
+            assert_eq!(original_column.name, copied_column.name);
+            assert_eq!(original_column.data_type, copied_column.data_type);
+            assert_eq!(original_column.data, copied_column.data);
+        }
+
+        // Modify the original table and check if the copied table remains unchanged
+        original_table
+            .insert(vec!["4".to_string(), "Dave".to_string(), "68.0".to_string()])
+            .unwrap();
+
+        assert_ne!(original_table.columns[0].data.len(), copied_table.columns[0].data.len());
+    }
 }

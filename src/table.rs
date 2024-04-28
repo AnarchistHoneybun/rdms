@@ -48,8 +48,8 @@ impl std::error::Error for Error {}
 
 #[derive(Debug)]
 pub struct Table {
-    name: String,
-    columns: Vec<Column>,
+    pub(crate) name: String,
+    pub(crate) columns: Vec<Column>,
 }
 
 impl Table {
@@ -57,6 +57,21 @@ impl Table {
         Table {
             name: table_name.to_string(),
             columns,
+        }
+    }
+
+    pub fn copy(&self) -> Table {
+        let mut new_columns = Vec::with_capacity(self.columns.len());
+
+        for column in &self.columns {
+            let mut new_column = Column::new(&*column.name.clone(), column.data_type.clone(), None);
+            new_column.data = column.data.clone();
+            new_columns.push(new_column);
+        }
+
+        Table {
+            name: self.name.clone(),
+            columns: new_columns,
         }
     }
 

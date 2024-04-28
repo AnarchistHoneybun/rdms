@@ -1,6 +1,6 @@
 use std::fmt;
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, PartialEq)]
 pub enum ColumnDataType {
     Integer,
     Float,
@@ -18,7 +18,7 @@ impl fmt::Display for ColumnDataType {
     }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub enum Value {
     Integer(i64),
     Float(f64),
