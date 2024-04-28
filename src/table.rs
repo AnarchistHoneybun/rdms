@@ -550,7 +550,7 @@ impl Table {
 
                 // Print the data rows
                 for row_idx in 0..max_rows {
-                    for (col_idx, column) in self.columns.iter().enumerate() {
+                    for (_col_idx, column) in self.columns.iter().enumerate() {
                         if row_idx < column.data.len() {
                             let value = &column.data[row_idx];
                             let padded_value =
