@@ -56,6 +56,23 @@ fn main() {
         println!("Error selecting data: {}", err);
     }
 
+    // Update a column for all records
+    let update_input = ("age".to_string(), "30".to_string());
+    if let Err(err) = users_table.update(update_input, None) {
+        println!("Error updating data: {}", err);
+    }
+
+    users_table.show();
+
+    // Update a column based on a condition
+    let update_input = ("user_id".to_string(), "7".to_string());
+    let condition_input = ("user_id".to_string(), "3".to_string(), "=".to_string());
+    if let Err(err) = users_table.update(update_input, Some(condition_input)) {
+        println!("Error updating data: {}", err);
+    }
+
+    users_table.show();
+
 
     users_table.describe();
 }
