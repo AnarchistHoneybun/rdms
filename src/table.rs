@@ -155,6 +155,7 @@ impl Table {
             // Parse the operator
             let operator = Operator::from_str(&operator_str).map_err(|e| Error::InvalidOperator(operator_str))?;
 
+
             // Update records based on the condition
             for record in &mut self.columns {
                 if record.name == update_column_name {
