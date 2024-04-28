@@ -3,6 +3,7 @@ use crate::table::Table;
 
 mod column;
 mod table;
+mod tests;
 
 fn main() {
     let columns = vec![
