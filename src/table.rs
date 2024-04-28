@@ -340,6 +340,28 @@ impl Table {
         }
         println!();
     }
+
+    pub fn count(&self, column_name: Option<String>) -> Result<usize, Error> {
+        return if let Some(column_name) = column_name {
+            // Check if the provided column name exists
+            if let Some(column) = self.columns.iter().find(|c| c.name == column_name) {
+                // Count the non-null values in the specified column
+                let non_null_count = column.data.iter().filter(|v| !matches!(v, Value::Null)).count();
+                Ok(non_null_count)
+            } else {
+                Err(Error::NonExistingColumn(column_name))
+            }
+        } else {
+            // If no column name is provided, count the total number of records
+            let max_rows = self
+                .columns
+                .iter()
+                .map(|column| column.data.len())
+                .max()
+                .unwrap_or(0);
+            Ok(max_rows)
+        }
+    }
 }
 
 fn satisfies_condition(value: &Value, cond_column_data_type: ColumnDataType, cond_value: &str, operator: &Operator) -> bool {

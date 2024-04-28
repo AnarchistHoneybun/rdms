@@ -143,4 +143,40 @@ mod tests {
         let result = table.select(vec!["invalid".to_string()]);
         assert!(matches!(result, Err(Error::NonExistingColumns(_))));
     }
+
+    #[test]
+    fn test_count() {
+        let mut table = Table::new(
+            "test_table",
+            vec![
+                Column::new("id", ColumnDataType::Integer, None),
+                Column::new("name", ColumnDataType::Text, None),
+                Column::new("score", ColumnDataType::Float, None),
+            ],
+        );
+
+        // Insert some initial data
+        table
+            .insert(vec!["1".to_string(), "Alice".to_string(), "85.5".to_string()])
+            .unwrap();
+        table
+            .insert(vec!["2".to_string(), "Bob".to_string(), "92.0".to_string()])
+            .unwrap();
+        table
+            .insert(vec!["3".to_string(), "Charlie".to_string(), "75.0".to_string()])
+            .unwrap();
+        table.insert(vec!["4".to_string(), "NULL".to_string(), "NULL".to_string()]).unwrap(); // Insert a record with null values
+
+        // Test counting total records
+        let total_records = table.count(None).unwrap();
+        assert_eq!(total_records, 4);
+
+        // Test counting non-null values in a column
+        let non_null_scores = table.count(Some("score".to_string())).unwrap();
+        assert_eq!(non_null_scores, 3);
+
+        // Test counting for a non-existing column
+        let result = table.count(Some("invalid".to_string()));
+        assert!(matches!(result, Err(Error::NonExistingColumn(_))));
+    }
 }
