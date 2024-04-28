@@ -1,6 +1,6 @@
 use std::fmt;
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Copy)]
 pub enum ColumnDataType {
     Integer,
     Float,
@@ -58,7 +58,7 @@ impl fmt::Display for Value {
     }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug)]
 pub struct Column {
     pub name: String,
     pub data_type: ColumnDataType,

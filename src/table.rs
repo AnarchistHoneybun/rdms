@@ -150,7 +150,7 @@ impl Table {
         if let Some((cond_column_name, cond_value, operator_str)) = condition_input {
 
             // Validate condition column name
-            let cond_column = self.columns.iter().find(|c| c.name == cond_column_name).ok_or(Error::NonExistingColumn(cond_column_name))?;
+            let cond_column_data_type = self.columns.iter().find(|c| c.name == cond_column_name).ok_or(Error::NonExistingColumn(cond_column_name))?.data_type.clone();
 
             // Parse the operator
             let operator = Operator::from_str(&operator_str).map_err(|e| Error::InvalidOperator(operator_str))?;
@@ -160,7 +160,7 @@ impl Table {
             for record in &mut self.columns {
                 if record.name == update_column_name {
                     record.data = record.data.iter().enumerate().filter_map(|(i, value)| {
-                        if satisfies_condition(value, cond_column, &cond_value, &operator) {
+                        if satisfies_condition(value, cond_column_data_type, &cond_value, &operator) {
                             Some(new_value.clone())
                         } else {
                             Some(value.clone())
@@ -330,8 +330,8 @@ impl Table {
     }
 }
 
-fn satisfies_condition(value: &Value, cond_column: &Column, cond_value: &str, operator: &Operator) -> bool {
-    match (value, &cond_column.data_type) {
+fn satisfies_condition(value: &Value, cond_column_data_type: ColumnDataType, cond_value: &str, operator: &Operator) -> bool {
+    match (value, &cond_column_data_type) {
         (Value::Integer(val), ColumnDataType::Integer) => {
             let cond_value: i64 = cond_value.parse().unwrap();
             match operator {
