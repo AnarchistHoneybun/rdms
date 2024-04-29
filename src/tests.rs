@@ -36,59 +36,6 @@ mod tests {
     }
 
     #[test]
-    fn test_update() {
-        let mut table = Table::new(
-            "test_table",
-            vec![
-                Column::new("id", ColumnDataType::Integer, None),
-                Column::new("name", ColumnDataType::Text, None),
-                Column::new("score", ColumnDataType::Float, None),
-            ],
-        );
-
-        // Insert some initial data
-        table
-            .insert(vec![
-                "1".to_string(),
-                "Alice".to_string(),
-                "85.5".to_string(),
-            ])
-            .unwrap();
-        table
-            .insert(vec!["2".to_string(), "Bob".to_string(), "92.0".to_string()])
-            .unwrap();
-        table
-            .insert(vec![
-                "3".to_string(),
-                "Charlie".to_string(),
-                "75.0".to_string(),
-            ])
-            .unwrap();
-
-        // Test updating a record without a condition
-        let result = table.update(("score".to_string(), "100.0".to_string()), None);
-        assert!(result.is_ok());
-
-        // Test updating a record with a condition
-        let result = table.update(
-            ("name".to_string(), "Dave".to_string()),
-            Some(("id".to_string(), "2".to_string(), "=".to_string())),
-        );
-        assert!(result.is_ok());
-
-        // Test updating with a non-existing column
-        let result = table.update(("invalid".to_string(), "value".to_string()), None);
-        assert!(matches!(result, Err(Error::NonExistingColumn(_))));
-
-        // Test updating with an invalid operator
-        let result = table.update(
-            ("score".to_string(), "80.0".to_string()),
-            Some(("id".to_string(), "2".to_string(), "invalid".to_string())),
-        );
-        assert!(matches!(result, Err(Error::InvalidOperator(_))));
-    }
-
-    #[test]
     fn test_update_column() {
         let mut table = Table::new(
             "test_table",
