@@ -15,7 +15,11 @@ mod tests {
         );
 
         // Test inserting a valid record
-        let result = table.insert(vec!["1".to_string(), "Alice".to_string(), "85.5".to_string()]);
+        let result = table.insert(vec![
+            "1".to_string(),
+            "Alice".to_string(),
+            "85.5".to_string(),
+        ]);
         assert!(result.is_ok());
 
         // Test inserting a record with mismatched column count
@@ -23,7 +27,11 @@ mod tests {
         assert!(matches!(result, Err(Error::MismatchedColumnCount)));
 
         // Test inserting a record with invalid data type
-        let result = table.insert(vec!["3".to_string(), "Charlie".to_string(), "invalid".to_string()]);
+        let result = table.insert(vec![
+            "3".to_string(),
+            "Charlie".to_string(),
+            "invalid".to_string(),
+        ]);
         assert!(matches!(result, Err(Error::ParseError(2, _))));
     }
 
@@ -39,9 +47,23 @@ mod tests {
         );
 
         // Insert some initial data
-        table.insert(vec!["1".to_string(), "Alice".to_string(), "85.5".to_string()]).unwrap();
-        table.insert(vec!["2".to_string(), "Bob".to_string(), "92.0".to_string()]).unwrap();
-        table.insert(vec!["3".to_string(), "Charlie".to_string(), "75.0".to_string()]).unwrap();
+        table
+            .insert(vec![
+                "1".to_string(),
+                "Alice".to_string(),
+                "85.5".to_string(),
+            ])
+            .unwrap();
+        table
+            .insert(vec!["2".to_string(), "Bob".to_string(), "92.0".to_string()])
+            .unwrap();
+        table
+            .insert(vec![
+                "3".to_string(),
+                "Charlie".to_string(),
+                "75.0".to_string(),
+            ])
+            .unwrap();
 
         // Test updating a record without a condition
         let result = table.update(("score".to_string(), "100.0".to_string()), None);
@@ -79,13 +101,21 @@ mod tests {
 
         // Insert some initial data
         table
-            .insert(vec!["1".to_string(), "Alice".to_string(), "85.5".to_string()])
+            .insert(vec![
+                "1".to_string(),
+                "Alice".to_string(),
+                "85.5".to_string(),
+            ])
             .unwrap();
         table
             .insert(vec!["2".to_string(), "Bob".to_string(), "92.0".to_string()])
             .unwrap();
         table
-            .insert(vec!["3".to_string(), "Charlie".to_string(), "75.0".to_string()])
+            .insert(vec![
+                "3".to_string(),
+                "Charlie".to_string(),
+                "75.0".to_string(),
+            ])
             .unwrap();
 
         // Test updating a column with a valid value
@@ -114,19 +144,26 @@ mod tests {
 
         // Insert some initial data
         table
-            .insert(vec!["1".to_string(), "Alice".to_string(), "85.5".to_string()])
+            .insert(vec![
+                "1".to_string(),
+                "Alice".to_string(),
+                "85.5".to_string(),
+            ])
             .unwrap();
         table
             .insert(vec!["2".to_string(), "Bob".to_string(), "92.0".to_string()])
             .unwrap();
         table
-            .insert(vec!["3".to_string(), "Charlie".to_string(), "75.0".to_string()])
+            .insert(vec![
+                "3".to_string(),
+                "Charlie".to_string(),
+                "75.0".to_string(),
+            ])
             .unwrap();
 
         // Test updating with a single condition
         let result = table.update_with_conditions(
-            ("score".to_string(),
-            "100.0".to_string(),),
+            ("score".to_string(), "100.0".to_string()),
             vec![("id".to_string(), "2".to_string(), "=".to_string())],
             "and",
         );
@@ -134,8 +171,7 @@ mod tests {
 
         // Test updating with multiple conditions (AND logic)
         let result = table.update_with_conditions(
-            ("name".to_string(),
-            "Dave".to_string()),
+            ("name".to_string(), "Dave".to_string()),
             vec![
                 ("id".to_string(), "2".to_string(), "=".to_string()),
                 ("score".to_string(), "92.0".to_string(), "=".to_string()),
@@ -146,8 +182,7 @@ mod tests {
 
         // Test updating with multiple conditions (OR logic)
         let result = table.update_with_conditions(
-            ("score".to_string(),
-            "80.0".to_string()),
+            ("score".to_string(), "80.0".to_string()),
             vec![
                 ("id".to_string(), "1".to_string(), "=".to_string()),
                 ("id".to_string(), "3".to_string(), "=".to_string()),
@@ -158,8 +193,7 @@ mod tests {
 
         // Test updating with a non-existing column in the condition
         let result = table.update_with_conditions(
-            ("score".to_string(),
-            "90.0".to_string()),
+            ("score".to_string(), "90.0".to_string()),
             vec![("invalid".to_string(), "value".to_string(), "=".to_string())],
             "and",
         );
@@ -167,8 +201,7 @@ mod tests {
 
         // Test updating with an invalid operator in the condition
         let result = table.update_with_conditions(
-            ("score".to_string(),
-            "90.0".to_string()),
+            ("score".to_string(), "90.0".to_string()),
             vec![("id".to_string(), "2".to_string(), "invalid".to_string())],
             "and",
         );
@@ -176,8 +209,7 @@ mod tests {
 
         // Test updating with an invalid logic string
         let result = table.update_with_conditions(
-            ("score".to_string(),
-            "90.0".to_string()),
+            ("score".to_string(), "90.0".to_string()),
             vec![("id".to_string(), "2".to_string(), "=".to_string())],
             "invalid",
         );
@@ -222,9 +254,9 @@ mod tests {
             vec!["4".to_string(), "invalid".to_string()],
         );
         assert!(matches!(
-        result,
-        Err(Error::ParseError(_, value_str)) if value_str == "invalid"
-    ));
+            result,
+            Err(Error::ParseError(_, value_str)) if value_str == "invalid"
+        ));
     }
 
     #[test]
@@ -240,13 +272,21 @@ mod tests {
 
         // Insert some initial data
         table
-            .insert(vec!["1".to_string(), "Alice".to_string(), "85.5".to_string()])
+            .insert(vec![
+                "1".to_string(),
+                "Alice".to_string(),
+                "85.5".to_string(),
+            ])
             .unwrap();
         table
             .insert(vec!["2".to_string(), "Bob".to_string(), "92.0".to_string()])
             .unwrap();
         table
-            .insert(vec!["3".to_string(), "Charlie".to_string(), "75.0".to_string()])
+            .insert(vec![
+                "3".to_string(),
+                "Charlie".to_string(),
+                "75.0".to_string(),
+            ])
             .unwrap();
 
         // Test selecting all columns
@@ -275,15 +315,29 @@ mod tests {
 
         // Insert some initial data
         table
-            .insert(vec!["1".to_string(), "Alice".to_string(), "85.5".to_string()])
+            .insert(vec![
+                "1".to_string(),
+                "Alice".to_string(),
+                "85.5".to_string(),
+            ])
             .unwrap();
         table
             .insert(vec!["2".to_string(), "Bob".to_string(), "92.0".to_string()])
             .unwrap();
         table
-            .insert(vec!["3".to_string(), "Charlie".to_string(), "75.0".to_string()])
+            .insert(vec![
+                "3".to_string(),
+                "Charlie".to_string(),
+                "75.0".to_string(),
+            ])
             .unwrap();
-        table.insert(vec!["4".to_string(), "NULL".to_string(), "NULL".to_string()]).unwrap(); // Insert a record with null values
+        table
+            .insert(vec![
+                "4".to_string(),
+                "NULL".to_string(),
+                "NULL".to_string(),
+            ])
+            .unwrap(); // Insert a record with null values
 
         // Test counting total records
         let total_records = table.count(None).unwrap();
@@ -311,13 +365,21 @@ mod tests {
 
         // Insert some initial data
         original_table
-            .insert(vec!["1".to_string(), "Alice".to_string(), "85.5".to_string()])
+            .insert(vec![
+                "1".to_string(),
+                "Alice".to_string(),
+                "85.5".to_string(),
+            ])
             .unwrap();
         original_table
             .insert(vec!["2".to_string(), "Bob".to_string(), "92.0".to_string()])
             .unwrap();
         original_table
-            .insert(vec!["3".to_string(), "Charlie".to_string(), "75.0".to_string()])
+            .insert(vec![
+                "3".to_string(),
+                "Charlie".to_string(),
+                "75.0".to_string(),
+            ])
             .unwrap();
 
         // Create a copy of the table
@@ -327,7 +389,11 @@ mod tests {
         assert_eq!(copied_table.name, original_table.name);
         assert_eq!(copied_table.columns.len(), original_table.columns.len());
 
-        for (original_column, copied_column) in original_table.columns.iter().zip(copied_table.columns.iter()) {
+        for (original_column, copied_column) in original_table
+            .columns
+            .iter()
+            .zip(copied_table.columns.iter())
+        {
             assert_eq!(original_column.name, copied_column.name);
             assert_eq!(original_column.data_type, copied_column.data_type);
             assert_eq!(original_column.data, copied_column.data);
@@ -335,9 +401,16 @@ mod tests {
 
         // Modify the original table and check if the copied table remains unchanged
         original_table
-            .insert(vec!["4".to_string(), "Dave".to_string(), "68.0".to_string()])
+            .insert(vec![
+                "4".to_string(),
+                "Dave".to_string(),
+                "68.0".to_string(),
+            ])
             .unwrap();
 
-        assert_ne!(original_table.columns[0].data.len(), copied_table.columns[0].data.len());
+        assert_ne!(
+            original_table.columns[0].data.len(),
+            copied_table.columns[0].data.len()
+        );
     }
 }
