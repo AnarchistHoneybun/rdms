@@ -97,7 +97,7 @@ fn main() {
 
     if let Err(err) = users_table.update_with_conditions(
         ("user_name".to_string(), "Sam".to_string()),
-        vec![("user_id".to_string(), "5".to_string(), "=".to_string()),
+        vec![("user_id".to_string(), "4".to_string(), "=".to_string()),
              ("age".to_string(), "30".to_string(), "=".to_string())],
         "and",
     ) {

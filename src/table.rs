@@ -711,7 +711,14 @@ fn evaluate_conditions(
     row_idx: usize,
     logic: &str,
 ) -> Result<bool, Error> {
-    let mut update_record = false;
+
+    let mut update_record = if logic.eq_ignore_ascii_case("and") {
+        true
+    } else if logic.eq_ignore_ascii_case("or") {
+        false
+    } else {
+        return Err(Error::InvalidLogic(logic.to_string()));
+    };
 
     for (cond_column_name, cond_value, operator_str) in conditions {
         let cond_column_data_type = columns
