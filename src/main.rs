@@ -93,5 +93,15 @@ fn main() {
 
     users_table.show();
 
+    match Table::import_table("users.txt", "pdf") {
+        Ok(table) => {
+            println!("Table imported successfully");
+            table.show();
+        }
+        Err(err) => {
+            eprintln!("Error: {}", err);
+        }
+    }
+
     users_table.describe();
 }
