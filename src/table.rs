@@ -615,10 +615,7 @@ impl Table {
 
                 // Read the column names
                 let column_names: Vec<String> = match lines.next() {
-                    Some(header_line) => header_line
-                        .split(',')
-                        .map(|s| s.to_string())
-                        .collect(),
+                    Some(header_line) => header_line.split(',').map(|s| s.to_string()).collect(),
                     None => return Err(Error::InvalidFormat("File is empty".to_string())),
                 };
 
@@ -626,14 +623,25 @@ impl Table {
                 let column_data_types: Vec<ColumnDataType> = match lines.next() {
                     Some(data_types_line) => data_types_line
                         .split(',')
-                        .map(|s| Ok(match s {
-                            "Integer" => ColumnDataType::Integer,
-                            "Float" => ColumnDataType::Float,
-                            "Text" => ColumnDataType::Text,
-                            _ => return Err(Error::InvalidFormat(format!("Invalid data type: {}", s))),
-                        }))
+                        .map(|s| {
+                            Ok(match s {
+                                "Integer" => ColumnDataType::Integer,
+                                "Float" => ColumnDataType::Float,
+                                "Text" => ColumnDataType::Text,
+                                _ => {
+                                    return Err(Error::InvalidFormat(format!(
+                                        "Invalid data type: {}",
+                                        s
+                                    )))
+                                }
+                            })
+                        })
                         .collect::<Result<Vec<_>, _>>()?,
-                    None => return Err(Error::InvalidFormat("File is missing data types".to_string())),
+                    None => {
+                        return Err(Error::InvalidFormat(
+                            "File is missing data types".to_string(),
+                        ))
+                    }
                 };
 
                 // Create columns with the corresponding data types
@@ -657,11 +665,15 @@ impl Table {
                             match column.data_type {
                                 ColumnDataType::Integer => match value_str.parse::<i64>() {
                                     Ok(value) => column.data.push(Value::Integer(value)),
-                                    Err(_) => return Err(Error::ParseError(column.data.len(), value_str)),
+                                    Err(_) => {
+                                        return Err(Error::ParseError(column.data.len(), value_str))
+                                    }
                                 },
                                 ColumnDataType::Float => match value_str.parse::<f64>() {
                                     Ok(value) => column.data.push(Value::Float(value)),
-                                    Err(_) => return Err(Error::ParseError(column.data.len(), value_str)),
+                                    Err(_) => {
+                                        return Err(Error::ParseError(column.data.len(), value_str))
+                                    }
                                 },
                                 ColumnDataType::Text => column.data.push(Value::Text(value_str)),
                             }
@@ -689,14 +701,25 @@ impl Table {
                 let column_data_types: Vec<ColumnDataType> = match lines.next() {
                     Some(data_types_line) => data_types_line
                         .split_whitespace()
-                        .map(|s| Ok(match s {
-                            "Integer" => ColumnDataType::Integer,
-                            "Float" => ColumnDataType::Float,
-                            "Text" => ColumnDataType::Text,
-                            _ => return Err(Error::InvalidFormat(format!("Invalid data type: {}", s))),
-                        }))
+                        .map(|s| {
+                            Ok(match s {
+                                "Integer" => ColumnDataType::Integer,
+                                "Float" => ColumnDataType::Float,
+                                "Text" => ColumnDataType::Text,
+                                _ => {
+                                    return Err(Error::InvalidFormat(format!(
+                                        "Invalid data type: {}",
+                                        s
+                                    )))
+                                }
+                            })
+                        })
                         .collect::<Result<Vec<_>, _>>()?,
-                    None => return Err(Error::InvalidFormat("File is missing data types".to_string())),
+                    None => {
+                        return Err(Error::InvalidFormat(
+                            "File is missing data types".to_string(),
+                        ))
+                    }
                 };
 
                 // Create columns with the corresponding data types
@@ -711,10 +734,8 @@ impl Table {
 
                 // Read the data rows
                 for line in lines {
-                    let row_values: Vec<String> = line
-                        .split_whitespace()
-                        .map(|s| s.to_string())
-                        .collect();
+                    let row_values: Vec<String> =
+                        line.split_whitespace().map(|s| s.to_string()).collect();
                     if row_values.len() != column_names.len() {
                         return Err(Error::MismatchedColumnCount);
                     }
@@ -726,11 +747,15 @@ impl Table {
                             match column.data_type {
                                 ColumnDataType::Integer => match value_str.parse::<i64>() {
                                     Ok(value) => column.data.push(Value::Integer(value)),
-                                    Err(_) => return Err(Error::ParseError(column.data.len(), value_str)),
+                                    Err(_) => {
+                                        return Err(Error::ParseError(column.data.len(), value_str))
+                                    }
                                 },
                                 ColumnDataType::Float => match value_str.parse::<f64>() {
                                     Ok(value) => column.data.push(Value::Float(value)),
-                                    Err(_) => return Err(Error::ParseError(column.data.len(), value_str)),
+                                    Err(_) => {
+                                        return Err(Error::ParseError(column.data.len(), value_str))
+                                    }
                                 },
                                 ColumnDataType::Text => column.data.push(Value::Text(value_str)),
                             }
@@ -787,7 +812,6 @@ fn evaluate_conditions(
     row_idx: usize,
     logic: &str,
 ) -> Result<bool, Error> {
-
     let mut update_record = if logic.eq_ignore_ascii_case("and") {
         true
     } else if logic.eq_ignore_ascii_case("or") {

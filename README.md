@@ -13,9 +13,12 @@ Currently, what we have is:
 - Functions to:
   - Create a table
   - Insert data (complete records or for specific columns)
-  - Update data (blanket updates or conditional)
+  - Update data (blanket updates or conditional upon single/multiple columns)
   - Select rows (entire table or specific columns)
   - Describe the table
+  - Exporting/Importing tables (currently imports only work for the formatting of the export, actively trying to figure out how to standardize them further)
+> **Note:** The tests directory is not included in the repo.
+> Please write them yourself while testing or raise an issue if you want me to add them.
 
 ## The Road Ahead
 I'm thinking of getting the delete functionality up and running next, and then move on to 

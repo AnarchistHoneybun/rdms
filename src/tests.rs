@@ -372,15 +372,28 @@ mod tests {
 
                 assert_eq!(table.columns[0].name, "id");
                 assert_eq!(table.columns[0].data_type, ColumnDataType::Integer);
-                assert_eq!(table.columns[0].data, vec![Value::Integer(1), Value::Integer(2), Value::Integer(3)]);
+                assert_eq!(
+                    table.columns[0].data,
+                    vec![Value::Integer(1), Value::Integer(2), Value::Integer(3)]
+                );
 
                 assert_eq!(table.columns[1].name, "name");
                 assert_eq!(table.columns[1].data_type, ColumnDataType::Text);
-                assert_eq!(table.columns[1].data, vec![Value::Text("Alice".to_string()), Value::Text("Bob".to_string()), Value::Text("Charlie".to_string())]);
+                assert_eq!(
+                    table.columns[1].data,
+                    vec![
+                        Value::Text("Alice".to_string()),
+                        Value::Text("Bob".to_string()),
+                        Value::Text("Charlie".to_string())
+                    ]
+                );
 
                 assert_eq!(table.columns[2].name, "score");
                 assert_eq!(table.columns[2].data_type, ColumnDataType::Float);
-                assert_eq!(table.columns[2].data, vec![Value::Float(85.5), Value::Float(92.0), Value::Float(75.0)]);
+                assert_eq!(
+                    table.columns[2].data,
+                    vec![Value::Float(85.5), Value::Float(92.0), Value::Float(75.0)]
+                );
             }
             Err(err) => panic!("Error importing CSV file: {}", err),
         }
@@ -394,15 +407,28 @@ mod tests {
 
                 assert_eq!(table.columns[0].name, "id");
                 assert_eq!(table.columns[0].data_type, ColumnDataType::Integer);
-                assert_eq!(table.columns[0].data, vec![Value::Integer(1), Value::Integer(2), Value::Integer(3)]);
+                assert_eq!(
+                    table.columns[0].data,
+                    vec![Value::Integer(1), Value::Integer(2), Value::Integer(3)]
+                );
 
                 assert_eq!(table.columns[1].name, "name");
                 assert_eq!(table.columns[1].data_type, ColumnDataType::Text);
-                assert_eq!(table.columns[1].data, vec![Value::Text("Alice".to_string()), Value::Text("Bob".to_string()), Value::Text("Charlie".to_string())]);
+                assert_eq!(
+                    table.columns[1].data,
+                    vec![
+                        Value::Text("Alice".to_string()),
+                        Value::Text("Bob".to_string()),
+                        Value::Text("Charlie".to_string())
+                    ]
+                );
 
                 assert_eq!(table.columns[2].name, "score");
                 assert_eq!(table.columns[2].data_type, ColumnDataType::Float);
-                assert_eq!(table.columns[2].data, vec![Value::Float(85.5), Value::Float(92.0), Value::Float(75.0)]);
+                assert_eq!(
+                    table.columns[2].data,
+                    vec![Value::Float(85.5), Value::Float(92.0), Value::Float(75.0)]
+                );
             }
             Err(err) => panic!("Error importing TXT file: {}", err),
         }
