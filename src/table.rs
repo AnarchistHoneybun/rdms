@@ -35,6 +35,7 @@ pub enum Error {
     InvalidOperator(String),   // operator_str
     FileError(String),
     InvalidFormat(String),
+    InvalidLogic(String),
 }
 
 impl fmt::Display for Error {
@@ -57,6 +58,7 @@ impl fmt::Display for Error {
             Error::InvalidOperator(operator_str) => write!(f, "Invalid operator: {}", operator_str),
             Error::FileError(msg) => write!(f, "File error: {}", msg),
             Error::InvalidFormat(format) => write!(f, "Invalid format: {}", format),
+            Error::InvalidLogic(logic) => write!(f, "Invalid logic: {}", logic),
         }
     }
 }
@@ -270,6 +272,172 @@ impl Table {
         Ok(())
     }
 
+    pub fn update_column(&mut self, column_name: &str, new_value: &str) -> Result<(), Error> {
+        let update_column = self.columns.iter_mut().find(|c| c.name == column_name).ok_or(Error::NonExistingColumn(column_name.to_string()))?;
+
+        let new_value = match update_column.data_type {
+            ColumnDataType::Integer => new_value.parse::<i64>().map(Value::Integer).map_err(|_| Error::ParseError(0, new_value.to_string()))?,
+            ColumnDataType::Float => new_value.parse::<f64>().map(Value::Float).map_err(|_| Error::ParseError(0, new_value.to_string()))?,
+            ColumnDataType::Text => Value::Text(new_value.to_string()),
+        };
+
+        update_column.data = vec![new_value.clone(); update_column.data.len()];
+
+        Ok(())
+    }
+
+    pub fn update_with_conditions(&mut self, update_input: (String, String), conditions: Vec<(String, String, String)>, logic: &str) -> Result<(), Error> {
+        // Validate column name in update_input
+        let update_column = self
+            .columns
+            .iter()
+            .find(|c| c.name == update_input.0)
+            .ok_or(Error::NonExistingColumn(update_input.0.clone()))?;
+
+        // Parse new_value according to the column's data type
+        let new_value = match update_column.data_type {
+            ColumnDataType::Integer => update_input
+                .1
+                .parse::<i64>()
+                .map(Value::Integer)
+                .map_err(|_| Error::ParseError(1, update_input.1.clone()))?,
+            ColumnDataType::Float => update_input
+                .1
+                .parse::<f64>()
+                .map(Value::Float)
+                .map_err(|_| Error::ParseError(1, update_input.1.clone()))?,
+            ColumnDataType::Text => Value::Text(update_input.1),
+        };
+
+        let update_column_name = self
+            .columns
+            .iter()
+            .find(|c| c.name == update_input.0)
+            .ok_or(Error::NonExistingColumn(update_input.0.clone()))?
+            .name
+            .clone();
+
+        let columns_clone = self.columns.clone();
+
+        for record in &mut self.columns {
+            if record.name == update_column_name {
+                record.data = record
+                    .data
+                    .iter()
+                    .enumerate()
+                    .try_fold(Vec::new(), |mut acc, (i, value)| {
+                        let update_record = evaluate_conditions(
+                            &columns_clone,
+                            &conditions,
+                            i,
+                            logic,
+                        )?;
+
+                        if update_record {
+                            acc.push(new_value.clone());
+                        } else {
+                            acc.push(value.clone());
+                        }
+
+                        Ok(acc)
+                    })?;
+            }
+        }
+
+        Ok(())
+    }
+    // pub fn update_with_conditions(&mut self, update_input: (String, String), conditions: Vec<(String, String, String)>, logic: &str) -> Result<(), Error> {
+    //     // Validate column name in update_input
+    //     let update_column = self
+    //         .columns
+    //         .iter()
+    //         .find(|c| c.name == update_input.0)
+    //         .ok_or(Error::NonExistingColumn(update_input.0.clone()))?;
+    //
+    //     // Parse new_value according to the column's data type
+    //     let new_value = match update_column.data_type {
+    //         ColumnDataType::Integer => update_input
+    //             .1
+    //             .parse::<i64>()
+    //             .map(Value::Integer)
+    //             .map_err(|_| Error::ParseError(1, update_input.1.clone()))?,
+    //         ColumnDataType::Float => update_input
+    //             .1
+    //             .parse::<f64>()
+    //             .map(Value::Float)
+    //             .map_err(|_| Error::ParseError(1, update_input.1.clone()))?,
+    //         ColumnDataType::Text => Value::Text(update_input.1),
+    //     };
+    //
+    //     let update_column_name = self
+    //         .columns
+    //         .iter()
+    //         .find(|c| c.name == update_input.0)
+    //         .ok_or(Error::NonExistingColumn(update_input.0.clone()))?
+    //         .name
+    //         .clone();
+    //
+    //     let columns_clone = self.columns.clone();
+    //
+    //     for record in &mut self.columns {
+    //         if record.name == update_column_name {
+    //             record.data = record
+    //                 .data
+    //                 .iter()
+    //                 .enumerate()
+    //                 .filter_map(|(i, value)| {
+    //                     let mut update_record = false;
+    //
+    //                     for (cond_column_name, cond_value, operator_str) in conditions {
+    //                         let cond_column_data_type = columns_clone.iter().find(|c| c.name == *cond_column_name).ok_or(Error::NonExistingColumn(cond_column_name.clone())).ok()?.data_type.clone();
+    //                         let operator = Operator::from_str(&operator_str)
+    //                             .map_err(|_e| Error::InvalidOperator(operator_str))?;
+    //
+    //                         let ref_value = columns_clone.iter().find(|c| c.name == *cond_column_name).ok_or(Error::NonExistingColumn(cond_column_name.clone())).ok()?.data.get(i).cloned();
+    //
+    //                         if logic.eq_ignore_ascii_case("and") {
+    //                             update_record &= ref_value.map_or(false, |v| satisfies_condition(&v, cond_column_data_type, &cond_value, &operator));
+    //                         } else if logic.eq_ignore_ascii_case("or") {
+    //                             update_record |= ref_value.map_or(false, |v| satisfies_condition(&v, cond_column_data_type, &cond_value, &operator));
+    //                         } else {
+    //                             return None;
+    //                         }
+    //                     }
+    //
+    //                     if update_record {
+    //                         Some(new_value.clone())
+    //                     } else {
+    //                         Some(value.clone())
+    //                     }
+    //                 })
+    //                 .collect();
+    //         }
+    //     }
+    //
+    //     // for (i, record) in update_column.data.iter_mut().enumerate() {
+    //     //     let mut update_record = false;
+    //     //
+    //     //     for (cond_column_name, cond_value, operator_str) in &conditions {
+    //     //         let cond_column_data_type = columns_clone.iter().find(|c| c.name == *cond_column_name).ok_or(Error::NonExistingColumn(cond_column_name.clone()))?.data_type.clone();
+    //     //         let operator = Operator::from_str(operator_str).map_err(|e| Error::InvalidOperator(operator_str.clone()))?;
+    //     //         let ref_value = columns_clone.iter().find(|c| c.name == *cond_column_name).ok_or(Error::NonExistingColumn(cond_column_name.clone()))?.data.get(i).cloned();
+    //     //
+    //     //         if logic.eq_ignore_ascii_case("and") {
+    //     //             update_record &= ref_value.map_or(false, |v| satisfies_condition(&v, cond_column_data_type, cond_value, &operator));
+    //     //         } else if logic.eq_ignore_ascii_case("or") {
+    //     //             update_record |= ref_value.map_or(false, |v| satisfies_condition(&v, cond_column_data_type, cond_value, &operator));
+    //     //         } else {
+    //     //             return Err(Error::InvalidLogic(logic.to_string()));
+    //     //         }
+    //     //     }
+    //     //
+    //     //     if update_record {
+    //     //         *record = new_value.clone();
+    //     //     }
+    //     // }
+    //
+    //     Ok(())
+    // }
     pub fn show(&self) {
         // Find the maximum length of column names
         let max_column_name_len = self
@@ -616,4 +784,47 @@ fn satisfies_condition(
         },
         _ => false, // Unsupported data type or value combination
     }
+}
+
+fn evaluate_conditions(
+    columns: &[Column],
+    conditions: &[(String, String, String)],
+    row_idx: usize,
+    logic: &str,
+) -> Result<bool, Error> {
+    let mut update_record = false;
+
+    for (cond_column_name, cond_value, operator_str) in conditions {
+        let cond_column_data_type = columns
+            .iter()
+            .find(|c| c.name == *cond_column_name)
+            .ok_or(Error::NonExistingColumn(cond_column_name.clone()))?
+            .data_type
+            .clone();
+
+        let operator = Operator::from_str(&operator_str)
+            .map_err(|_e| Error::InvalidOperator(operator_str.clone()))?;
+
+        let ref_value = columns
+            .iter()
+            .find(|c| c.name == *cond_column_name)
+            .ok_or(Error::NonExistingColumn(cond_column_name.clone()))?
+            .data
+            .get(row_idx)
+            .cloned();
+
+        let condition_satisfied = ref_value.map_or(false, |v| {
+            satisfies_condition(&v, cond_column_data_type, &cond_value, &operator)
+        });
+
+        if logic.eq_ignore_ascii_case("and") {
+            update_record &= condition_satisfied;
+        } else if logic.eq_ignore_ascii_case("or") {
+            update_record |= condition_satisfied;
+        } else {
+            return Err(Error::InvalidLogic(logic.to_string()));
+        }
+    }
+
+    Ok(update_record)
 }

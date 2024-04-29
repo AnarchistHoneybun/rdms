@@ -67,6 +67,124 @@ mod tests {
     }
 
     #[test]
+    fn test_update_column() {
+        let mut table = Table::new(
+            "test_table",
+            vec![
+                Column::new("id", ColumnDataType::Integer, None),
+                Column::new("name", ColumnDataType::Text, None),
+                Column::new("score", ColumnDataType::Float, None),
+            ],
+        );
+
+        // Insert some initial data
+        table
+            .insert(vec!["1".to_string(), "Alice".to_string(), "85.5".to_string()])
+            .unwrap();
+        table
+            .insert(vec!["2".to_string(), "Bob".to_string(), "92.0".to_string()])
+            .unwrap();
+        table
+            .insert(vec!["3".to_string(), "Charlie".to_string(), "75.0".to_string()])
+            .unwrap();
+
+        // Test updating a column with a valid value
+        let result = table.update_column("score", "100.0");
+        assert!(result.is_ok());
+
+        // Test updating a non-existing column
+        let result = table.update_column("invalid", "value");
+        assert!(matches!(result, Err(Error::NonExistingColumn(_))));
+
+        // Test updating with an invalid value for the column data type
+        let result = table.update_column("id", "invalid");
+        assert!(matches!(result, Err(Error::ParseError(0, _))));
+    }
+
+    #[test]
+    fn test_update_with_conditions() {
+        let mut table = Table::new(
+            "test_table",
+            vec![
+                Column::new("id", ColumnDataType::Integer, None),
+                Column::new("name", ColumnDataType::Text, None),
+                Column::new("score", ColumnDataType::Float, None),
+            ],
+        );
+
+        // Insert some initial data
+        table
+            .insert(vec!["1".to_string(), "Alice".to_string(), "85.5".to_string()])
+            .unwrap();
+        table
+            .insert(vec!["2".to_string(), "Bob".to_string(), "92.0".to_string()])
+            .unwrap();
+        table
+            .insert(vec!["3".to_string(), "Charlie".to_string(), "75.0".to_string()])
+            .unwrap();
+
+        // Test updating with a single condition
+        let result = table.update_with_conditions(
+            ("score".to_string(),
+            "100.0".to_string(),),
+            vec![("id".to_string(), "2".to_string(), "=".to_string())],
+            "and",
+        );
+        assert!(result.is_ok());
+
+        // Test updating with multiple conditions (AND logic)
+        let result = table.update_with_conditions(
+            ("name".to_string(),
+            "Dave".to_string()),
+            vec![
+                ("id".to_string(), "2".to_string(), "=".to_string()),
+                ("score".to_string(), "92.0".to_string(), "=".to_string()),
+            ],
+            "and",
+        );
+        assert!(result.is_ok());
+
+        // Test updating with multiple conditions (OR logic)
+        let result = table.update_with_conditions(
+            ("score".to_string(),
+            "80.0".to_string()),
+            vec![
+                ("id".to_string(), "1".to_string(), "=".to_string()),
+                ("id".to_string(), "3".to_string(), "=".to_string()),
+            ],
+            "or",
+        );
+        assert!(result.is_ok());
+
+        // Test updating with a non-existing column in the condition
+        let result = table.update_with_conditions(
+            ("score".to_string(),
+            "90.0".to_string()),
+            vec![("invalid".to_string(), "value".to_string(), "=".to_string())],
+            "and",
+        );
+        assert!(matches!(result, Err(Error::NonExistingColumn(_))));
+
+        // Test updating with an invalid operator in the condition
+        let result = table.update_with_conditions(
+            ("score".to_string(),
+            "90.0".to_string()),
+            vec![("id".to_string(), "2".to_string(), "invalid".to_string())],
+            "and",
+        );
+        assert!(matches!(result, Err(Error::InvalidOperator(_))));
+
+        // Test updating with an invalid logic string
+        let result = table.update_with_conditions(
+            ("score".to_string(),
+            "90.0".to_string()),
+            vec![("id".to_string(), "2".to_string(), "=".to_string())],
+            "invalid",
+        );
+        assert!(matches!(result, Err(Error::InvalidLogic(_))));
+    }
+
+    #[test]
     fn test_insert_with_columns() {
         let mut table = Table::new(
             "test_table",

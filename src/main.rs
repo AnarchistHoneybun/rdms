@@ -94,6 +94,17 @@ fn main() {
 
     let _users_copy = users_table.copy();
 
+    if let Err(err)= users_table.update_with_conditions(
+        ("age".to_string(),
+         "90".to_string()),
+        vec![("user_id".to_string(), "5".to_string(), "=".to_string())],
+        "or",
+    ) {
+        println!("Error updating data: {}", err);
+    }
+
+    users_table.show();
+
 
     users_table.describe();
 }
