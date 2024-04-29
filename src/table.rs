@@ -1,6 +1,6 @@
 use crate::column::{Column, ColumnDataType, Value};
 use std::fs::File;
-use std::io::{BufWriter, Write};
+use std::io::{BufRead, BufReader, BufWriter, Write};
 use std::path::Path;
 use std::{collections::HashSet, fmt};
 
@@ -465,6 +465,20 @@ impl Table {
                     .write_all(b"\n")
                     .map_err(|e| Error::FileError(format!("Failed to write to file: {}", e)))?;
 
+                // Write column data types
+                let data_types = self
+                    .columns
+                    .iter()
+                    .map(|c| format!("{}", c.data_type))
+                    .collect::<Vec<_>>()
+                    .join(",");
+                writer
+                    .write_all(data_types.as_bytes())
+                    .map_err(|e| Error::FileError(format!("Failed to write to file: {}", e)))?;
+                writer
+                    .write_all(b"\n")
+                    .map_err(|e| Error::FileError(format!("Failed to write to file: {}", e)))?;
+
                 // Write data rows
                 let max_rows = self
                     .columns
@@ -510,6 +524,21 @@ impl Table {
                         format!("{:>width$}", column.name, width = max_column_name_len);
                     writer
                         .write_all(padded_name.as_bytes())
+                        .map_err(|e| Error::FileError(format!("Failed to write to file: {}", e)))?;
+                    writer
+                        .write_all(b" ")
+                        .map_err(|e| Error::FileError(format!("Failed to write to file: {}", e)))?;
+                }
+                writer
+                    .write_all(b"\n")
+                    .map_err(|e| Error::FileError(format!("Failed to write to file: {}", e)))?;
+
+                // Print the column data types
+                for column in &self.columns {
+                    let padded_data_type =
+                        format!("{:<width$}", column.data_type, width = max_column_name_len);
+                    writer
+                        .write_all(padded_data_type.as_bytes())
                         .map_err(|e| Error::FileError(format!("Failed to write to file: {}", e)))?;
                     writer
                         .write_all(b" ")
@@ -571,6 +600,175 @@ impl Table {
 
         Ok(())
     }
+
+    pub fn import_table(file_name: &str, format: &str) -> Result<Table, Error> {
+        let path = Path::new(file_name);
+        let file = match File::open(path) {
+            Ok(file) => file,
+            Err(e) => return Err(Error::FileError(format!("Failed to open file: {}", e))),
+        };
+
+        match format.to_lowercase().as_str() {
+            "csv" => {
+                let reader = BufReader::new(file);
+                let mut lines = reader.lines().map(|line| line.unwrap());
+
+                // Read the column names
+                let column_names: Vec<String> = match lines.next() {
+                    Some(header_line) => header_line.split(',').map(|s| s.to_string()).collect(),
+                    None => return Err(Error::InvalidFormat("File is empty".to_string())),
+                };
+
+                // Read the column data types
+                let column_data_types: Vec<ColumnDataType> = match lines.next() {
+                    Some(data_types_line) => data_types_line
+                        .split(',')
+                        .map(|s| {
+                            Ok(match s {
+                                "Integer" => ColumnDataType::Integer,
+                                "Float" => ColumnDataType::Float,
+                                "Text" => ColumnDataType::Text,
+                                _ => {
+                                    return Err(Error::InvalidFormat(format!(
+                                        "Invalid data type: {}",
+                                        s
+                                    )))
+                                }
+                            })
+                        })
+                        .collect::<Result<Vec<_>, _>>()?,
+                    None => {
+                        return Err(Error::InvalidFormat(
+                            "File is missing data types".to_string(),
+                        ))
+                    }
+                };
+
+                // Create columns with the corresponding data types
+                let mut columns: Vec<Column> = column_names
+                    .iter()
+                    .zip(column_data_types.iter())
+                    .map(|(name, data_type)| Column::new(name, data_type.clone(), None))
+                    .collect();
+
+                // Read the data rows
+                for line in lines {
+                    let row_values: Vec<String> = line.split(',').map(|s| s.to_string()).collect();
+                    if row_values.len() != column_names.len() {
+                        return Err(Error::MismatchedColumnCount);
+                    }
+
+                    for (column, value_str) in columns.iter_mut().zip(row_values.into_iter()) {
+                        if value_str.trim().to_lowercase() == "null" {
+                            column.data.push(Value::Null);
+                        } else {
+                            match column.data_type {
+                                ColumnDataType::Integer => match value_str.parse::<i64>() {
+                                    Ok(value) => column.data.push(Value::Integer(value)),
+                                    Err(_) => {
+                                        return Err(Error::ParseError(column.data.len(), value_str))
+                                    }
+                                },
+                                ColumnDataType::Float => match value_str.parse::<f64>() {
+                                    Ok(value) => column.data.push(Value::Float(value)),
+                                    Err(_) => {
+                                        return Err(Error::ParseError(column.data.len(), value_str))
+                                    }
+                                },
+                                ColumnDataType::Text => column.data.push(Value::Text(value_str)),
+                            }
+                        }
+                    }
+                }
+
+                let table_name = file_name.to_string();
+                Ok(Table::new(&table_name, columns))
+            }
+            "txt" => {
+                let reader = BufReader::new(file);
+                let mut lines = reader.lines().map(|line| line.unwrap());
+
+                // Read the column names
+                let column_names: Vec<String> = match lines.next() {
+                    Some(header_line) => header_line
+                        .split_whitespace()
+                        .map(|s| s.to_string())
+                        .collect(),
+                    None => return Err(Error::InvalidFormat("File is empty".to_string())),
+                };
+
+                // Read the column data types
+                let column_data_types: Vec<ColumnDataType> = match lines.next() {
+                    Some(data_types_line) => data_types_line
+                        .split_whitespace()
+                        .map(|s| {
+                            Ok(match s {
+                                "Integer" => ColumnDataType::Integer,
+                                "Float" => ColumnDataType::Float,
+                                "Text" => ColumnDataType::Text,
+                                _ => {
+                                    return Err(Error::InvalidFormat(format!(
+                                        "Invalid data type: {}",
+                                        s
+                                    )))
+                                }
+                            })
+                        })
+                        .collect::<Result<Vec<_>, _>>()?,
+                    None => {
+                        return Err(Error::InvalidFormat(
+                            "File is missing data types".to_string(),
+                        ))
+                    }
+                };
+
+                // Create columns with the corresponding data types
+                let mut columns: Vec<Column> = column_names
+                    .iter()
+                    .zip(column_data_types.iter())
+                    .map(|(name, data_type)| Column::new(name, data_type.clone(), None))
+                    .collect();
+
+                // the text file format has one line of seperators, so we need to skip it
+                lines.next();
+
+                // Read the data rows
+                for line in lines {
+                    let row_values: Vec<String> =
+                        line.split_whitespace().map(|s| s.to_string()).collect();
+                    if row_values.len() != column_names.len() {
+                        return Err(Error::MismatchedColumnCount);
+                    }
+
+                    for (column, value_str) in columns.iter_mut().zip(row_values.into_iter()) {
+                        if value_str.trim().to_lowercase() == "null" {
+                            column.data.push(Value::Null);
+                        } else {
+                            match column.data_type {
+                                ColumnDataType::Integer => match value_str.parse::<i64>() {
+                                    Ok(value) => column.data.push(Value::Integer(value)),
+                                    Err(_) => {
+                                        return Err(Error::ParseError(column.data.len(), value_str))
+                                    }
+                                },
+                                ColumnDataType::Float => match value_str.parse::<f64>() {
+                                    Ok(value) => column.data.push(Value::Float(value)),
+                                    Err(_) => {
+                                        return Err(Error::ParseError(column.data.len(), value_str))
+                                    }
+                                },
+                                ColumnDataType::Text => column.data.push(Value::Text(value_str)),
+                            }
+                        }
+                    }
+                }
+
+                let table_name = file_name.to_string();
+                Ok(Table::new(&table_name, columns))
+            }
+            _ => Err(Error::InvalidFormat(format.to_string())),
+        }
+    }
 }
 
 fn satisfies_condition(
@@ -614,7 +812,6 @@ fn evaluate_conditions(
     row_idx: usize,
     logic: &str,
 ) -> Result<bool, Error> {
-
     let mut update_record = if logic.eq_ignore_ascii_case("and") {
         true
     } else if logic.eq_ignore_ascii_case("or") {
