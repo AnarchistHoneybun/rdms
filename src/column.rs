@@ -1,5 +1,6 @@
 use std::fmt;
 
+/// Supported datatypes for columns.
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub enum ColumnDataType {
     Integer,
@@ -7,17 +8,20 @@ pub enum ColumnDataType {
     Text,
 }
 
+/// Implement the Display trait for ColumnDataType,
+/// for printing in table description/error messages/table export
 impl fmt::Display for ColumnDataType {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
             ColumnDataType::Integer => write!(f, "Integer"),
             ColumnDataType::Float => write!(f, "Float"),
             ColumnDataType::Text => write!(f, "Text"),
-            // Add other data types as needed
         }
     }
 }
 
+/// Supported value types for columns.
+/// Distinct from datatype as this is actual data storage and that is more metadata-ish.
 #[derive(Debug, Clone, PartialEq)]
 pub enum Value {
     Integer(i64),
@@ -26,6 +30,8 @@ pub enum Value {
     Null,
 }
 
+/// Implement the Display trait for Value,
+/// for printing in select functions/table export/table display
 impl fmt::Display for Value {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
@@ -58,6 +64,8 @@ impl fmt::Display for Value {
     }
 }
 
+/// Struct used to store columns.
+/// Each column has a name, datatype and a vector of values of type ColumnDataType.
 #[derive(Debug, Clone)]
 pub struct Column {
     pub name: String,
@@ -66,6 +74,8 @@ pub struct Column {
 }
 
 impl Column {
+
+    /// Create a new column with the given name, datatype and default value.
     pub fn new(name: &str, data_type: ColumnDataType, default_value: Option<Value>) -> Self {
         Column {
             name: name.to_owned(),
