@@ -4,6 +4,8 @@ use std::io::{BufRead, BufReader, BufWriter, Write};
 use std::path::Path;
 use std::{collections::HashSet, fmt};
 
+/// This Operator enum represents the different comparison operators that can be used in an update
+/// or select condition. These are mapped to respective operations on execution.
 #[derive(Debug, PartialEq)]
 enum Operator {
     Equal,
@@ -14,6 +16,9 @@ enum Operator {
 }
 
 impl Operator {
+
+    /// This function converts a string to an Operator enum. It returns an error if the requested string
+    /// is not a supported operator.
     fn from_str(s: &str) -> Result<Operator, String> {
         match s {
             "=" => Ok(Operator::Equal),
@@ -26,6 +31,7 @@ impl Operator {
     }
 }
 
+/// Enum for various error types that can occur during table operations.
 #[derive(Debug)]
 pub enum Error {
     MismatchedColumnCount,
@@ -38,6 +44,7 @@ pub enum Error {
     InvalidLogic(String),
 }
 
+/// Implement Display trait for Error enum to allow for custom error messages.
 impl fmt::Display for Error {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
@@ -65,6 +72,8 @@ impl fmt::Display for Error {
 
 impl std::error::Error for Error {}
 
+/// Struct representing a table with a name and a vector of columns
+/// (data is stored inside the column struct).
 #[derive(Debug)]
 pub struct Table {
     pub(crate) name: String,
@@ -72,6 +81,8 @@ pub struct Table {
 }
 
 impl Table {
+
+    /// Function to create a new table, given a name and a vector of columns.
     pub fn new(table_name: &str, columns: Vec<Column>) -> Table {
         Table {
             name: table_name.to_string(),
@@ -79,6 +90,8 @@ impl Table {
         }
     }
 
+    /// Function to create a copy of the table. Useful when trying to create backups/perform
+    /// simultaneous edits for comparison.
     pub fn copy(&self) -> Table {
         let mut new_columns = Vec::with_capacity(self.columns.len());
 
@@ -94,6 +107,13 @@ impl Table {
         }
     }
 
+    /// Function to insert new data into the table. This inserts a whole record at a time,
+    /// therefore will error out if number of provided data points does not match the number of
+    /// columns in the table.
+    ///
+    /// Function flow: accept data -> check if number of data points match number of columns (error
+    /// out if not) -> parse data points (error out if data cannot be parsed
+    /// into the data type of respective column) -> insert parsed data into table.
     pub fn insert(&mut self, data: Vec<String>) -> Result<(), Error> {
         if data.len() != self.columns.len() {
             return Err(Error::MismatchedColumnCount);
@@ -126,6 +146,14 @@ impl Table {
         Ok(())
     }
 
+    /// Function to insert a new record, but can be formatted to only insert data into specific columns.
+    /// Will fill the other columns with a null value.
+    ///
+    /// Function flow: accept column names and data -> check if provided column names exist in the
+    /// table (error out if not) -> check if number of data points match number of column names (error
+    /// out if not) -> parse data points (error out if data cannot be parsed into the data type of
+    /// the respective column) (data points are null on init so columns with no provided
+    /// data end up null on insertion) -> insert parsed data into table.
     pub fn insert_with_columns(
         &mut self,
         column_names: Vec<String>,
@@ -175,6 +203,11 @@ impl Table {
         Ok(())
     }
 
+    /// Function to update a particular column for all records.
+    ///
+    /// Function flow: accept column name and new value -> check if column exists in the table (error
+    /// out if not) -> parse new value (error out if data cannot be parsed into the data type of
+    /// provided column) -> update the entire column with the parsed data point.
     pub fn update_column(&mut self, column_name: &str, new_value: &str) -> Result<(), Error> {
         let update_column = self
             .columns
@@ -199,6 +232,17 @@ impl Table {
         Ok(())
     }
 
+    /// Function to update a particular column for all records, but can be formatted to only update
+    /// records that meet a certain conditions in one or more columns (these can be the same as the column being updated
+    /// or different). Can be conditional on meeting all conditions or any one of the conditions.
+    ///
+    /// Function flow: accept column name, new value, conditions, and logic ->
+    /// check if column to be updated exists in the table (error out if not) -> parse new value (error
+    /// out if it cannot be parsed into the data type of the requested column) ->
+    /// iterate over all records, and for each column, check if that is the field that needs update
+    /// -> evaluate all conditions for the record (error out if a condition is invalid based on
+    /// operator, invalid column etc. or if provided logic string is not supported) -> update record
+    /// if requisite conditions are met.
     pub fn update_with_conditions(
         &mut self,
         update_input: (String, String),
@@ -260,6 +304,10 @@ impl Table {
         Ok(())
     }
 
+    /// Function to print the entire record to the terminal.
+    ///
+    /// Function flow: find the largest column name, so rest of the columns can be padded
+    /// accordingly -> print the data out line by line, column by column.
     pub fn show(&self) {
         // Find the maximum length of column names
         let max_column_name_len = self
@@ -306,6 +354,12 @@ impl Table {
         }
     }
 
+    /// Function to display only requested columns from the table (if called with an empty column
+    /// list, will call the show function).
+    ///
+    /// Function flow: check if column names are provided -> check if provided column names exist in
+    /// the table (error out if not) -> find the maximum length of requested column names -> print
+    /// requested columns out to the terminal.
     pub fn select(&self, column_names: Vec<String>) -> Result<(), Error> {
         if column_names.is_empty() {
             // If no column names are provided, call the show function
@@ -380,6 +434,7 @@ impl Table {
         Ok(())
     }
 
+    /// Function to provide the structure of the table. Lists all the columns and their data types.
     pub fn describe(&self) {
         println!("Table: {}", self.name);
         println!();
@@ -415,6 +470,9 @@ impl Table {
         println!();
     }
 
+    /// Function to count the number of records in the table. Is able to accept a column name as
+    /// input. If no column name is provided, returns the total record count. Otherwise, returns the total
+    /// number of not-null values in that column for that table.
     pub fn count(&self, column_name: Option<String>) -> Result<usize, Error> {
         return if let Some(column_name) = column_name {
             // Check if the provided column name exists
@@ -441,6 +499,7 @@ impl Table {
         };
     }
 
+    /// Function to export the table to a csv or txt file based on input.
     pub fn export_table(&self, file_name: &str, format: &str) -> Result<(), Error> {
         let path = Path::new(file_name);
         let file = match File::create(path) {
@@ -601,6 +660,8 @@ impl Table {
         Ok(())
     }
 
+    /// Function to import a table stored in csv or txt format and define a table variable from it.
+    /// Only reads data that is stored in the same format as exported by the export function.
     pub fn import_table(file_name: &str, format: &str) -> Result<Table, Error> {
         let path = Path::new(file_name);
         let file = match File::open(path) {
@@ -771,6 +832,9 @@ impl Table {
     }
 }
 
+/// Function to check if a given column satisfies a particular condition based on
+/// provided operator, reference value and the column it is conditional on. Will error out
+/// if any of these are not properly formatted or are un-supported data types.
 fn satisfies_condition(
     value: &Value,
     cond_column_data_type: ColumnDataType,
@@ -806,6 +870,8 @@ fn satisfies_condition(
     }
 }
 
+/// Function to batch evaluate multiple conditions on a column, calls the satisfies_condition
+/// function for all provided conditions and returns a flag.
 fn evaluate_conditions(
     columns: &[Column],
     conditions: &[(String, String, String)],
