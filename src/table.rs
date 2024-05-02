@@ -4,6 +4,13 @@ use std::io::{BufRead, BufReader, BufWriter, Write};
 use std::path::Path;
 use std::{collections::HashSet, fmt};
 
+#[derive(Debug)]
+pub enum NestedCondition {
+    Condition(String, String, String),
+    And(Box<NestedCondition>, Box<NestedCondition>),
+    Or(Box<NestedCondition>, Box<NestedCondition>),
+}
+
 /// This Operator enum represents the different comparison operators that can be used in an update
 /// or select condition. These are mapped to respective operations on execution.
 #[derive(Debug, PartialEq)]
@@ -828,6 +835,109 @@ impl Table {
                 Ok(Table::new(&table_name, columns))
             }
             _ => Err(Error::InvalidFormat(format.to_string())),
+        }
+    }
+
+    /// Function to update a column with a new value based on a nested condition structure.
+    pub fn update_with_nested_conditions(
+        &mut self,
+        update_input: (String, String),
+        nested_condition: NestedCondition,
+    ) -> Result<(), Error> {
+        // Validate column name in update_input
+        let update_column = self
+            .columns
+            .iter()
+            .find(|c| c.name == update_input.0)
+            .ok_or(Error::NonExistingColumn(update_input.0.clone()))?;
+
+        // Parse new_value according to the column's data type
+        let new_value = match update_column.data_type {
+            ColumnDataType::Integer => update_input
+                .1
+                .parse::<i64>()
+                .map(Value::Integer)
+                .map_err(|_| Error::ParseError(1, update_input.1.clone()))?,
+            ColumnDataType::Float => update_input
+                .1
+                .parse::<f64>()
+                .map(Value::Float)
+                .map_err(|_| Error::ParseError(1, update_input.1.clone()))?,
+            ColumnDataType::Text => Value::Text(update_input.1),
+        };
+
+        let update_column_name = self
+            .columns
+            .iter()
+            .find(|c| c.name == update_input.0)
+            .ok_or(Error::NonExistingColumn(update_input.0.clone()))?
+            .name
+            .clone();
+
+        let columns_clone = self.columns.clone();
+
+        for record in &mut self.columns {
+            if record.name == update_column_name {
+                record.data = record.data.iter().enumerate().try_fold(
+                    Vec::new(),
+                    |mut acc, (i, value)| {
+                        let update_record =
+                            evaluate_nested_conditions(&nested_condition, &columns_clone, i)?;
+
+                        if update_record {
+                            acc.push(new_value.clone());
+                        } else {
+                            acc.push(value.clone());
+                        }
+
+                        Ok(acc)
+                    },
+                )?;
+            }
+        }
+
+        Ok(())
+    }
+}
+
+fn evaluate_nested_conditions(
+    condition: &NestedCondition,
+    columns: &[Column],
+    row_idx: usize,
+) -> Result<bool, Error> {
+    match condition {
+        NestedCondition::Condition(column_name, operator, value) => {
+            let cond_column_data_type = columns
+                .iter()
+                .find(|c| c.name == *column_name)
+                .ok_or(Error::NonExistingColumn(column_name.clone()))?
+                .data_type
+                .clone();
+
+            let operator = Operator::from_str(&operator)
+                .map_err(|_e| Error::InvalidOperator(operator.clone()))?;
+
+            let ref_value = columns
+                .iter()
+                .find(|c| c.name == *column_name)
+                .ok_or(Error::NonExistingColumn(column_name.clone()))?
+                .data
+                .get(row_idx)
+                .cloned();
+
+            Ok(ref_value.map_or(false, |v| {
+                satisfies_condition(&v, cond_column_data_type, &value, &operator)
+            }))
+        }
+        NestedCondition::And(left, right) => {
+            let left_result = evaluate_nested_conditions(left, columns, row_idx)?;
+            let right_result = evaluate_nested_conditions(right, columns, row_idx)?;
+            Ok(left_result && right_result)
+        }
+        NestedCondition::Or(left, right) => {
+            let left_result = evaluate_nested_conditions(left, columns, row_idx)?;
+            let right_result = evaluate_nested_conditions(right, columns, row_idx)?;
+            Ok(left_result || right_result)
         }
     }
 }
