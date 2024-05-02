@@ -4,6 +4,13 @@ use std::io::{BufRead, BufReader, BufWriter, Write};
 use std::path::Path;
 use std::{collections::HashSet, fmt};
 
+#[derive(Debug)]
+pub enum NestedCondition {
+    Condition(String, String, String),
+    And(Box<NestedCondition>, Box<NestedCondition>),
+    Or(Box<NestedCondition>, Box<NestedCondition>),
+}
+
 /// This Operator enum represents the different comparison operators that can be used in an update
 /// or select condition. These are mapped to respective operations on execution.
 #[derive(Debug, PartialEq)]
@@ -828,6 +835,185 @@ impl Table {
                 Ok(Table::new(&table_name, columns))
             }
             _ => Err(Error::InvalidFormat(format.to_string())),
+        }
+    }
+
+    /// Updates a column with a new value based on a nested condition structure.
+    ///
+    /// # Arguments
+    ///
+    /// * `update_input` - A tuple containing the column name to update and the new value.
+    /// * `nested_condition` - A `NestedCondition` enum representing the nested condition structure.
+    ///
+    /// # Returns
+    ///
+    /// * `Ok(())` if the update operation is successful.
+    /// * `Err(Error)` if an error occurs during the update operation.
+    ///
+    /// # Errors
+    ///
+    /// This function can return the following errors:
+    ///
+    /// * `Error::NonExistingColumn` - If the column to be updated does not exist in the table.
+    /// * `Error::ParseError` - If the new value cannot be parsed into the data type of the requested column.
+    /// * `Error::NonExistingColumn` - If a column in the condition does not exist in the table.
+    /// * `Error::InvalidOperator` - If an invalid operator is used in the condition.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use crate::column::{Column, ColumnDataType};
+    /// use crate::table::{NestedCondition, Table};
+    ///
+    /// let mut table = Table::new(
+    ///     "users",
+    ///     vec![
+    ///         Column::new("user_id", ColumnDataType::Integer, None),
+    ///         Column::new("user_name", ColumnDataType::Text, None),
+    ///         Column::new("age", ColumnDataType::Integer, None),
+    ///     ],
+    /// );
+    ///
+    /// // Insert some initial data
+    /// table.insert(vec!["1".to_string(), "Alice".to_string(), "27".to_string()]).unwrap();
+    /// table.insert(vec!["2".to_string(), "Bob".to_string(), "35".to_string()]).unwrap();
+    /// table.insert(vec!["3".to_string(), "Charlie".to_string(), "19".to_string()]).unwrap();
+    ///
+    /// // Update the "user_name" column with "Sam" for records where "age" is 30
+    /// let nested_condition = NestedCondition::Condition(
+    ///     "age".to_string(),
+    ///     "=".to_string(),
+    ///     "30".to_string(),
+    /// );
+    /// table.update_with_nested_conditions(
+    ///     ("user_name".to_string(), "Sam".to_string()),
+    ///     nested_condition,
+    /// ).unwrap();
+    ///
+    /// // Update the "user_name" column with "Sam" for records where "age" is 30 AND "user_id" is 2 OR 3
+    /// let nested_condition = NestedCondition::And(
+    ///     Box::new(NestedCondition::Condition(
+    ///         "age".to_string(),
+    ///         "=".to_string(),
+    ///         "30".to_string(),
+    ///     )),
+    ///     Box::new(NestedCondition::Or(
+    ///         Box::new(NestedCondition::Condition(
+    ///             "user_id".to_string(),
+    ///             "=".to_string(),
+    ///             "2".to_string(),
+    ///         )),
+    ///         Box::new(NestedCondition::Condition(
+    ///             "user_id".to_string(),
+    ///             "=".to_string(),
+    ///             "3".to_string(),
+    ///         )),
+    ///     )),
+    /// );
+    /// table.update_with_nested_conditions(
+    ///     ("user_name".to_string(), "Sam".to_string()),
+    ///     nested_condition,
+    /// ).unwrap();
+    /// ```
+    pub fn update_with_nested_conditions(
+        &mut self,
+        update_input: (String, String),
+        nested_condition: NestedCondition,
+    ) -> Result<(), Error> {
+        // Validate column name in update_input
+        let update_column = self
+            .columns
+            .iter()
+            .find(|c| c.name == update_input.0)
+            .ok_or(Error::NonExistingColumn(update_input.0.clone()))?;
+
+        // Parse new_value according to the column's data type
+        let new_value = match update_column.data_type {
+            ColumnDataType::Integer => update_input
+                .1
+                .parse::<i64>()
+                .map(Value::Integer)
+                .map_err(|_| Error::ParseError(1, update_input.1.clone()))?,
+            ColumnDataType::Float => update_input
+                .1
+                .parse::<f64>()
+                .map(Value::Float)
+                .map_err(|_| Error::ParseError(1, update_input.1.clone()))?,
+            ColumnDataType::Text => Value::Text(update_input.1),
+        };
+
+        let update_column_name = self
+            .columns
+            .iter()
+            .find(|c| c.name == update_input.0)
+            .ok_or(Error::NonExistingColumn(update_input.0.clone()))?
+            .name
+            .clone();
+
+        let columns_clone = self.columns.clone();
+
+        for record in &mut self.columns {
+            if record.name == update_column_name {
+                record.data = record.data.iter().enumerate().try_fold(
+                    Vec::new(),
+                    |mut acc, (i, value)| {
+                        let update_record =
+                            evaluate_nested_conditions(&nested_condition, &columns_clone, i)?;
+
+                        if update_record {
+                            acc.push(new_value.clone());
+                        } else {
+                            acc.push(value.clone());
+                        }
+
+                        Ok(acc)
+                    },
+                )?;
+            }
+        }
+
+        Ok(())
+    }
+}
+
+fn evaluate_nested_conditions(
+    condition: &NestedCondition,
+    columns: &[Column],
+    row_idx: usize,
+) -> Result<bool, Error> {
+    match condition {
+        NestedCondition::Condition(column_name, operator, value) => {
+            let cond_column_data_type = columns
+                .iter()
+                .find(|c| c.name == *column_name)
+                .ok_or(Error::NonExistingColumn(column_name.clone()))?
+                .data_type
+                .clone();
+
+            let operator = Operator::from_str(&operator)
+                .map_err(|_e| Error::InvalidOperator(operator.clone()))?;
+
+            let ref_value = columns
+                .iter()
+                .find(|c| c.name == *column_name)
+                .ok_or(Error::NonExistingColumn(column_name.clone()))?
+                .data
+                .get(row_idx)
+                .cloned();
+
+            Ok(ref_value.map_or(false, |v| {
+                satisfies_condition(&v, cond_column_data_type, &value, &operator)
+            }))
+        }
+        NestedCondition::And(left, right) => {
+            let left_result = evaluate_nested_conditions(left, columns, row_idx)?;
+            let right_result = evaluate_nested_conditions(right, columns, row_idx)?;
+            Ok(left_result && right_result)
+        }
+        NestedCondition::Or(left, right) => {
+            let left_result = evaluate_nested_conditions(left, columns, row_idx)?;
+            let right_result = evaluate_nested_conditions(right, columns, row_idx)?;
+            Ok(left_result || right_result)
         }
     }
 }

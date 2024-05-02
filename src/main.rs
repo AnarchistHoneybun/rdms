@@ -1,5 +1,5 @@
 use crate::column::{Column, ColumnDataType};
-use crate::table::Table;
+use crate::table::{NestedCondition, Table};
 
 mod column;
 mod table;
@@ -104,6 +104,35 @@ fn main() {
             eprintln!("Error: {}", err);
         }
     }
+
+    let nested_condition = NestedCondition::And(
+        Box::new(NestedCondition::Condition(
+            "age".to_string(),
+            "=".to_string(),
+            "30".to_string(),
+        )),
+        Box::new(NestedCondition::Or(
+            Box::new(NestedCondition::Condition(
+                "user_id".to_string(),
+                "=".to_string(),
+                "4".to_string(),
+            )),
+            Box::new(NestedCondition::Condition(
+                "user_id".to_string(),
+                "=".to_string(),
+                "5".to_string(),
+            )),
+        )),
+    );
+
+    if let Err(err) = users_table.update_with_nested_conditions(
+        ("user_name".to_string(), "Sam".to_string()),
+        nested_condition,
+    ) {
+        println!("Error updating data: {}", err);
+    }
+
+    users_table.show();
 
     users_table.describe();
 }

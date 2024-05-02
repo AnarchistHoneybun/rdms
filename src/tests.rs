@@ -1,7 +1,7 @@
 #[cfg(test)]
 mod tests {
     use crate::column::{Column, ColumnDataType, Value};
-    use crate::table::{Error, Table};
+    use crate::table::{Error, NestedCondition, Table};
 
     #[test]
     fn test_insert() {
@@ -440,5 +440,112 @@ mod tests {
         // Test importing a file with invalid format
         let result = Table::import_table("tests/data/test_data.txt", "pdf");
         assert!(matches!(result, Err(Error::InvalidFormat(_))));
+    }
+
+    #[test]
+    fn test_update_with_nested_conditions() {
+        let mut table = Table::new(
+            "test_table",
+            vec![
+                Column::new("user_id", ColumnDataType::Integer, None),
+                Column::new("user_name", ColumnDataType::Text, None),
+                Column::new("age", ColumnDataType::Integer, None),
+            ],
+        );
+
+        // Insert some initial data
+        table
+            .insert(vec![
+                "1".to_string(),
+                "Alice".to_string(),
+                "27".to_string(),
+            ])
+            .unwrap();
+        table
+            .insert(vec!["2".to_string(), "Bob".to_string(), "35".to_string()])
+            .unwrap();
+        table
+            .insert(vec![
+                "3".to_string(),
+                "Charlie".to_string(),
+                "19".to_string(),
+            ])
+            .unwrap();
+        table
+            .insert(vec![
+                "4".to_string(),
+                "Dave".to_string(),
+                "30".to_string(),
+            ])
+            .unwrap();
+        table
+            .insert(vec![
+                "5".to_string(),
+                "Eve".to_string(),
+                "30".to_string(),
+            ])
+            .unwrap();
+
+        // Test updating with a single condition
+        let nested_condition = NestedCondition::Condition(
+            "age".to_string(),
+            "=".to_string(),
+            "30".to_string(),
+        );
+        let result = table.update_with_nested_conditions(
+            ("user_name".to_string(), "Sam".to_string()),
+            nested_condition,
+        );
+        assert!(result.is_ok());
+
+        // Test updating with nested conditions (AND and OR)
+        let nested_condition = NestedCondition::And(
+            Box::new(NestedCondition::Condition(
+                "age".to_string(),
+                "=".to_string(),
+                "30".to_string(),
+            )),
+            Box::new(NestedCondition::Or(
+                Box::new(NestedCondition::Condition(
+                    "user_id".to_string(),
+                    "=".to_string(),
+                    "4".to_string(),
+                )),
+                Box::new(NestedCondition::Condition(
+                    "user_id".to_string(),
+                    "=".to_string(),
+                    "5".to_string(),
+                )),
+            )),
+        );
+        let result = table.update_with_nested_conditions(
+            ("user_name".to_string(), "Sam".to_string()),
+            nested_condition,
+        );
+        assert!(result.is_ok());
+
+        // Test updating with a non-existing column in the condition
+        let nested_condition = NestedCondition::Condition(
+            "invalid".to_string(),
+            "=".to_string(),
+            "value".to_string(),
+        );
+        let result = table.update_with_nested_conditions(
+            ("user_name".to_string(), "Sam".to_string()),
+            nested_condition,
+        );
+        assert!(matches!(result, Err(Error::NonExistingColumn(_))));
+
+        // Test updating with an invalid operator in the condition
+        let nested_condition = NestedCondition::Condition(
+            "age".to_string(),
+            "invalid".to_string(),
+            "30".to_string(),
+        );
+        let result = table.update_with_nested_conditions(
+            ("user_name".to_string(), "Sam".to_string()),
+            nested_condition,
+        );
+        assert!(matches!(result, Err(Error::InvalidOperator(_))));
     }
 }
