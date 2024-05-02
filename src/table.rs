@@ -838,7 +838,83 @@ impl Table {
         }
     }
 
-    /// Function to update a column with a new value based on a nested condition structure.
+    /// Updates a column with a new value based on a nested condition structure.
+    ///
+    /// # Arguments
+    ///
+    /// * `update_input` - A tuple containing the column name to update and the new value.
+    /// * `nested_condition` - A `NestedCondition` enum representing the nested condition structure.
+    ///
+    /// # Returns
+    ///
+    /// * `Ok(())` if the update operation is successful.
+    /// * `Err(Error)` if an error occurs during the update operation.
+    ///
+    /// # Errors
+    ///
+    /// This function can return the following errors:
+    ///
+    /// * `Error::NonExistingColumn` - If the column to be updated does not exist in the table.
+    /// * `Error::ParseError` - If the new value cannot be parsed into the data type of the requested column.
+    /// * `Error::NonExistingColumn` - If a column in the condition does not exist in the table.
+    /// * `Error::InvalidOperator` - If an invalid operator is used in the condition.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use crate::column::{Column, ColumnDataType};
+    /// use crate::table::{NestedCondition, Table};
+    ///
+    /// let mut table = Table::new(
+    ///     "users",
+    ///     vec![
+    ///         Column::new("user_id", ColumnDataType::Integer, None),
+    ///         Column::new("user_name", ColumnDataType::Text, None),
+    ///         Column::new("age", ColumnDataType::Integer, None),
+    ///     ],
+    /// );
+    ///
+    /// // Insert some initial data
+    /// table.insert(vec!["1".to_string(), "Alice".to_string(), "27".to_string()]).unwrap();
+    /// table.insert(vec!["2".to_string(), "Bob".to_string(), "35".to_string()]).unwrap();
+    /// table.insert(vec!["3".to_string(), "Charlie".to_string(), "19".to_string()]).unwrap();
+    ///
+    /// // Update the "user_name" column with "Sam" for records where "age" is 30
+    /// let nested_condition = NestedCondition::Condition(
+    ///     "age".to_string(),
+    ///     "=".to_string(),
+    ///     "30".to_string(),
+    /// );
+    /// table.update_with_nested_conditions(
+    ///     ("user_name".to_string(), "Sam".to_string()),
+    ///     nested_condition,
+    /// ).unwrap();
+    ///
+    /// // Update the "user_name" column with "Sam" for records where "age" is 30 AND "user_id" is 2 OR 3
+    /// let nested_condition = NestedCondition::And(
+    ///     Box::new(NestedCondition::Condition(
+    ///         "age".to_string(),
+    ///         "=".to_string(),
+    ///         "30".to_string(),
+    ///     )),
+    ///     Box::new(NestedCondition::Or(
+    ///         Box::new(NestedCondition::Condition(
+    ///             "user_id".to_string(),
+    ///             "=".to_string(),
+    ///             "2".to_string(),
+    ///         )),
+    ///         Box::new(NestedCondition::Condition(
+    ///             "user_id".to_string(),
+    ///             "=".to_string(),
+    ///             "3".to_string(),
+    ///         )),
+    ///     )),
+    /// );
+    /// table.update_with_nested_conditions(
+    ///     ("user_name".to_string(), "Sam".to_string()),
+    ///     nested_condition,
+    /// ).unwrap();
+    /// ```
     pub fn update_with_nested_conditions(
         &mut self,
         update_input: (String, String),
