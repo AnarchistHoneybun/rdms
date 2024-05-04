@@ -47,7 +47,6 @@ pub enum Error {
     InvalidOperator(String),   // operator_str
     FileError(String),
     InvalidFormat(String),
-    InvalidLogic(String),
 }
 
 /// Implement Display trait for Error enum to allow for custom error messages.
@@ -71,7 +70,6 @@ impl fmt::Display for Error {
             Error::InvalidOperator(operator_str) => write!(f, "Invalid operator: {}", operator_str),
             Error::FileError(msg) => write!(f, "File error: {}", msg),
             Error::InvalidFormat(format) => write!(f, "Invalid format: {}", format),
-            Error::InvalidLogic(logic) => write!(f, "Invalid logic: {}", logic),
         }
     }
 }
@@ -1290,72 +1288,3 @@ fn satisfies_condition(
     }
 }
 
-/// Evaluates a set of conditions against a specific row in the table.
-///
-/// # Arguments
-///
-/// * `columns` - A slice of `Column` instances representing the columns in the table.
-/// * `conditions` - A slice of tuples representing the conditions, where each tuple contains the column name, operator, and value.
-/// * `row_idx` - The index of the row to evaluate the conditions against.
-/// * `logic` - A string representing the logical operator to combine the conditions ("and" or "or").
-///
-/// # Returns
-///
-/// * `Ok(bool)` - `true` if the row satisfies the conditions based on the provided logic, `false` otherwise.
-/// * `Err(Error)` - An error if a column in the conditions does not exist in the table, if an invalid operator is used, or if an invalid logic string is provided.
-///
-/// # Errors
-///
-/// This function can return the following errors:
-///
-/// * `Error::NonExistingColumn` - If a column in the conditions does not exist in the table.
-/// * `Error::InvalidOperator` - If an invalid operator is used in the conditions.
-/// * `Error::InvalidLogic` - If the provided logic string is not "and" or "or".
-fn evaluate_conditions(
-    columns: &[Column],
-    conditions: &[(String, String, String)],
-    row_idx: usize,
-    logic: &str,
-) -> Result<bool, Error> {
-    let mut update_record = if logic.eq_ignore_ascii_case("and") {
-        true
-    } else if logic.eq_ignore_ascii_case("or") {
-        false
-    } else {
-        return Err(Error::InvalidLogic(logic.to_string()));
-    };
-
-    for (cond_column_name, cond_value, operator_str) in conditions {
-        let cond_column_data_type = columns
-            .iter()
-            .find(|c| c.name == *cond_column_name)
-            .ok_or(Error::NonExistingColumn(cond_column_name.clone()))?
-            .data_type
-            .clone();
-
-        let operator = Operator::from_str(&operator_str)
-            .map_err(|_e| Error::InvalidOperator(operator_str.clone()))?;
-
-        let ref_value = columns
-            .iter()
-            .find(|c| c.name == *cond_column_name)
-            .ok_or(Error::NonExistingColumn(cond_column_name.clone()))?
-            .data
-            .get(row_idx)
-            .cloned();
-
-        let condition_satisfied = ref_value.map_or(false, |v| {
-            satisfies_condition(&v, cond_column_data_type, &cond_value, &operator)
-        });
-
-        if logic.eq_ignore_ascii_case("and") {
-            update_record &= condition_satisfied;
-        } else if logic.eq_ignore_ascii_case("or") {
-            update_record |= condition_satisfied;
-        } else {
-            return Err(Error::InvalidLogic(logic.to_string()));
-        }
-    }
-
-    Ok(update_record)
-}
