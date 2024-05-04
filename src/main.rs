@@ -144,26 +144,4 @@ fn main() {
         println!("Error updating data: {}", err);
     }
     users_table.show();
-
-    // Filter records where "age" is 30 AND "user_id" is 2 OR 3
-    let nested_condition = NestedCondition::And(
-        Box::new(NestedCondition::Condition(
-            "age".to_string(),
-            "=".to_string(),
-            "30".to_string(),
-        )),
-        Box::new(NestedCondition::And(
-            Box::new(NestedCondition::Condition(
-                "user_id".to_string(),
-                ">".to_string(),
-                "2".to_string(),
-            )),
-            Box::new(NestedCondition::Condition(
-                "user_id".to_string(),
-                "<".to_string(),
-                "6".to_string(),
-            )),
-        )),
-    );
-    users_table.filter(nested_condition);
 }
