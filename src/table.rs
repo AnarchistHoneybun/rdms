@@ -23,7 +23,6 @@ enum Operator {
 }
 
 impl Operator {
-
     /// This function converts a string to an Operator enum. It returns an error if the requested string
     /// is not a supported operator.
     fn from_str(s: &str) -> Result<Operator, String> {
@@ -88,8 +87,31 @@ pub struct Table {
 }
 
 impl Table {
-
-    /// Function to create a new table, given a name and a vector of columns.
+    /// Creates a new `Table` instance with the provided table name and columns.
+    ///
+    /// # Arguments
+    ///
+    /// * `table_name` - A string slice representing the name of the table.
+    /// * `columns` - A vector of `Column` instances representing the columns in the table.
+    ///
+    /// # Returns
+    ///
+    /// A `Table` instance with the provided name and columns.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use crate::column::{Column, ColumnDataType};
+    /// use crate::table::Table;
+    ///
+    /// let columns = vec![
+    ///     Column::new("id", ColumnDataType::Integer, None),
+    ///     Column::new("name", ColumnDataType::Text, None),
+    ///     Column::new("age", ColumnDataType::Integer, None),
+    /// ];
+    ///
+    /// let table = Table::new("users", columns);
+    /// ```
     pub fn new(table_name: &str, columns: Vec<Column>) -> Table {
         Table {
             name: table_name.to_string(),
@@ -97,8 +119,29 @@ impl Table {
         }
     }
 
-    /// Function to create a copy of the table. Useful when trying to create backups/perform
-    /// simultaneous edits for comparison.
+    /// Creates a copy of the current `Table` instance.
+    ///
+    /// # Returns
+    ///
+    /// A `Table` instance with the same name and columns as the current instance, but with a deep copy of the data.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use crate::column::{Column, ColumnDataType};
+    /// use crate::table::Table;
+    ///
+    /// let mut table = Table::new("users", vec![
+    ///     Column::new("id", ColumnDataType::Integer, None),
+    ///     Column::new("name", ColumnDataType::Text, None),
+    ///     Column::new("age", ColumnDataType::Integer, None),
+    /// ]);
+    ///
+    /// // Insert some initial data
+    /// table.insert(vec!["1".to_string(), "Alice".to_string(), "25".to_string()]).unwrap();
+    ///
+    /// let table_copy = table.copy();
+    /// ```
     pub fn copy(&self) -> Table {
         let mut new_columns = Vec::with_capacity(self.columns.len());
 
@@ -114,13 +157,38 @@ impl Table {
         }
     }
 
-    /// Function to insert new data into the table. This inserts a whole record at a time,
-    /// therefore will error out if number of provided data points does not match the number of
-    /// columns in the table.
+    /// Inserts a new record into the table.
     ///
-    /// Function flow: accept data -> check if number of data points match number of columns (error
-    /// out if not) -> parse data points (error out if data cannot be parsed
-    /// into the data type of respective column) -> insert parsed data into table.
+    /// # Arguments
+    ///
+    /// * `data` - A vector of `String` values representing the data to be inserted. The number of values must match the number of columns in the table.
+    ///
+    /// # Returns
+    ///
+    /// * `Ok(())` if the insertion operation is successful.
+    /// * `Err(Error)` if an error occurs during the insertion operation.
+    ///
+    /// # Errors
+    ///
+    /// This function can return the following errors:
+    ///
+    /// * `Error::MismatchedColumnCount` - If the number of provided data values does not match the number of columns in the table.
+    /// * `Error::ParseError` - If a data value cannot be parsed into the corresponding column's data type.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use crate::column::{Column, ColumnDataType};
+    /// use crate::table::Table;
+    ///
+    /// let mut table = Table::new("users", vec![
+    ///     Column::new("id", ColumnDataType::Integer, None),
+    ///     Column::new("name", ColumnDataType::Text, None),
+    ///     Column::new("age", ColumnDataType::Integer, None),
+    /// ]);
+    ///
+    /// table.insert(vec!["1".to_string(), "Alice".to_string(), "25".to_string()]).unwrap();
+    /// ```
     pub fn insert(&mut self, data: Vec<String>) -> Result<(), Error> {
         if data.len() != self.columns.len() {
             return Err(Error::MismatchedColumnCount);
@@ -239,11 +307,40 @@ impl Table {
         Ok(())
     }
 
-    /// Function to update a particular column for all records.
+    /// Updates the values of a specified column with a new value.
     ///
-    /// Function flow: accept column name and new value -> check if column exists in the table (error
-    /// out if not) -> parse new value (error out if data cannot be parsed into the data type of
-    /// provided column) -> update the entire column with the parsed data point.
+    /// # Arguments
+    ///
+    /// * `column_name` - A string slice representing the name of the column to update.
+    /// * `new_value` - A string slice representing the new value to be set for the column.
+    ///
+    /// # Returns
+    ///
+    /// * `Ok(())` if the update operation is successful.
+    /// * `Err(Error)` if an error occurs during the update operation.
+    ///
+    /// # Errors
+    ///
+    /// This function can return the following error:
+    ///
+    /// * `Error::NonExistingColumn` - If the specified column does not exist in the table.
+    /// * `Error::ParseError` - If the new value cannot be parsed into the corresponding column's data type.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use crate::column::{Column, ColumnDataType};
+    /// use crate::table::Table;
+    ///
+    /// let mut table = Table::new("users", vec![
+    ///     Column::new("id", ColumnDataType::Integer, None),
+    ///     Column::new("name", ColumnDataType::Text, None),
+    ///     Column::new("age", ColumnDataType::Integer, None),
+    /// ]);
+    ///
+    /// // Update the "age" column with the value 30
+    /// table.update_column("age", "30").unwrap();
+    /// ```
     pub fn update_column(&mut self, column_name: &str, new_value: &str) -> Result<(), Error> {
         let update_column = self
             .columns
@@ -340,10 +437,28 @@ impl Table {
         Ok(())
     }
 
-    /// Function to print the entire record to the terminal.
+    /// Prints the entire table data to the console.
     ///
-    /// Function flow: find the largest column name, so rest of the columns can be padded
-    /// accordingly -> print the data out line by line, column by column.
+    /// The function finds the maximum length of column names to properly align the data, and then prints the column names, a separator line, and the data rows. If the number of rows varies across columns, the function will print blank spaces for missing values.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use crate::column::{Column, ColumnDataType};
+    /// use crate::table::Table;
+    ///
+    /// let mut table = Table::new("users", vec![
+    ///     Column::new("id", ColumnDataType::Integer, None),
+    ///     Column::new("name", ColumnDataType::Text, None),
+    ///     Column::new("age", ColumnDataType::Integer, None),
+    /// ]);
+    ///
+    /// // Insert some initial data
+    /// table.insert(vec!["1".to_string(), "Alice".to_string(), "25".to_string()]).unwrap();
+    /// table.insert(vec!["2".to_string(), "Bob".to_string(), "30".to_string()]).unwrap();
+    ///
+    /// table.show();
+    /// ```
     pub fn show(&self) {
         // Find the maximum length of column names
         let max_column_name_len = self
@@ -492,7 +607,23 @@ impl Table {
         Ok(())
     }
 
-    /// Function to provide the structure of the table. Lists all the columns and their data types.
+
+    /// Prints the structure of the table, including the column names and their corresponding data types.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use crate::column::{Column, ColumnDataType};
+    /// use crate::table::Table;
+    ///
+    /// let table = Table::new("users", vec![
+    ///     Column::new("id", ColumnDataType::Integer, None),
+    ///     Column::new("name", ColumnDataType::Text, None),
+    ///     Column::new("age", ColumnDataType::Integer, None),
+    /// ]);
+    ///
+    /// table.describe();
+    /// ```
     pub fn describe(&self) {
         println!("Table: {}", self.name);
         println!();
@@ -528,9 +659,48 @@ impl Table {
         println!();
     }
 
-    /// Function to count the number of records in the table. Is able to accept a column name as
-    /// input. If no column name is provided, returns the total record count. Otherwise, returns the total
-    /// number of not-null values in that column for that table.
+    /// Counts the number of records or non-null values in a specific column or the entire table.
+    ///
+    /// # Arguments
+    ///
+    /// * `column_name` - An optional string representing the name of the column to count non-null values for. If `None`, the function will count the total number of records in the table.
+    ///
+    /// # Returns
+    ///
+    /// * `Ok(usize)` - The count of records or non-null values, depending on whether a column name was provided or not.
+    /// * `Err(Error)` - An error if the provided column name does not exist in the table.
+    ///
+    /// # Errors
+    ///
+    /// This function can return the following error:
+    ///
+    /// * `Error::NonExistingColumn` - If the provided column name does not exist in the table.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use crate::column::{Column, ColumnDataType};
+    /// use crate::table::Table;
+    ///
+    /// let mut table = Table::new("users", vec![
+    ///     Column::new("id", ColumnDataType::Integer, None),
+    ///     Column::new("name", ColumnDataType::Text, None),
+    ///     Column::new("age", ColumnDataType::Integer, None),
+    /// ]);
+    ///
+    /// // Insert some initial data
+    /// table.insert(vec!["1".to_string(), "Alice".to_string(), "25".to_string()]).unwrap();
+    /// table.insert(vec!["2".to_string(), "Bob".to_string(), "30".to_string()]).unwrap();
+    /// table.insert(vec!["3".to_string(), "Charlie".to_string(), "".to_string()]).unwrap(); // null age
+    ///
+    /// // Count total records
+    /// let total_count = table.count(None).unwrap();
+    /// assert_eq!(total_count, 3);
+    ///
+    /// // Count non-null values in "age" column
+    /// let age_count = table.count(Some("age".to_string())).unwrap();
+    /// assert_eq!(age_count, 2);
+    /// ```
     pub fn count(&self, column_name: Option<String>) -> Result<usize, Error> {
         return if let Some(column_name) = column_name {
             // Check if the provided column name exists
@@ -1084,6 +1254,25 @@ impl Table {
     }
 }
 
+/// Evaluates a nested condition structure against a specific row in the table.
+///
+/// # Arguments
+///
+/// * `condition` - A reference to the `NestedCondition` enum representing the nested condition structure.
+/// * `columns` - A slice of `Column` instances representing the columns in the table.
+/// * `row_idx` - The index of the row to evaluate the conditions against.
+///
+/// # Returns
+///
+/// * `Ok(bool)` - `true` if the row satisfies the nested condition, `false` otherwise.
+/// * `Err(Error)` - An error if a column in the condition does not exist in the table or if an invalid operator is used.
+///
+/// # Errors
+///
+/// This function can return the following errors:
+///
+/// * `Error::NonExistingColumn` - If a column in the condition does not exist in the table.
+/// * `Error::InvalidOperator` - If an invalid operator is used in the condition.
 fn evaluate_nested_conditions(
     condition: &NestedCondition,
     columns: &[Column],
@@ -1126,9 +1315,18 @@ fn evaluate_nested_conditions(
     }
 }
 
-/// Function to check if a given column satisfies a particular condition based on
-/// provided operator, reference value and the column it is conditional on. Will error out
-/// if any of these are not properly formatted or are un-supported data types.
+/// Checks if a value satisfies a specific condition based on the provided operator and condition value.
+///
+/// # Arguments
+///
+/// * `value` - A reference to the `Value` enum representing the value to check.
+/// * `cond_column_data_type` - The `ColumnDataType` of the column the condition is based on.
+/// * `cond_value` - A string slice representing the condition value.
+/// * `operator` - A reference to the `Operator` enum representing the comparison operator.
+///
+/// # Returns
+///
+/// * `bool` - `true` if the value satisfies the condition, `false` otherwise.
 fn satisfies_condition(
     value: &Value,
     cond_column_data_type: ColumnDataType,
@@ -1164,8 +1362,27 @@ fn satisfies_condition(
     }
 }
 
-/// Function to batch evaluate multiple conditions on a column, calls the satisfies_condition
-/// function for all provided conditions and returns a flag.
+/// Evaluates a set of conditions against a specific row in the table.
+///
+/// # Arguments
+///
+/// * `columns` - A slice of `Column` instances representing the columns in the table.
+/// * `conditions` - A slice of tuples representing the conditions, where each tuple contains the column name, operator, and value.
+/// * `row_idx` - The index of the row to evaluate the conditions against.
+/// * `logic` - A string representing the logical operator to combine the conditions ("and" or "or").
+///
+/// # Returns
+///
+/// * `Ok(bool)` - `true` if the row satisfies the conditions based on the provided logic, `false` otherwise.
+/// * `Err(Error)` - An error if a column in the conditions does not exist in the table, if an invalid operator is used, or if an invalid logic string is provided.
+///
+/// # Errors
+///
+/// This function can return the following errors:
+///
+/// * `Error::NonExistingColumn` - If a column in the conditions does not exist in the table.
+/// * `Error::InvalidOperator` - If an invalid operator is used in the conditions.
+/// * `Error::InvalidLogic` - If the provided logic string is not "and" or "or".
 fn evaluate_conditions(
     columns: &[Column],
     conditions: &[(String, String, String)],
