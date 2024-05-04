@@ -1180,6 +1180,60 @@ impl Table {
         }
     }
 
+    /// Filters the table rows based on the provided nested condition structure and prints the filtered rows to the console.
+    ///
+    /// # Arguments
+    ///
+    /// * `nested_condition` - A `NestedCondition` enum representing the nested condition structure.
+    ///
+    /// # Returns
+    ///
+    /// * `Ok(())` if the filtering operation is successful.
+    /// * `Err(Error)` if an error occurs during the filtering operation.
+    ///
+    /// # Errors
+    ///
+    /// This function can return the following errors:
+    ///
+    /// * `Error::NonExistingColumn` - If a column in the condition does not exist in the table.
+    /// * `Error::InvalidOperator` - If an invalid operator is used in the condition.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use crate::column::{Column, ColumnDataType};
+    /// use crate::table::{NestedCondition, Table};
+    ///
+    /// let mut table = Table::new(
+    ///     "users",
+    ///     vec![
+    ///         Column::new("user_id", ColumnDataType::Integer, None),
+    ///         Column::new("user_name", ColumnDataType::Text, None),
+    ///         Column::new("age", ColumnDataType::Integer, None),
+    ///         Column::new("score", ColumnDataType::Float, None),
+    ///     ],
+    /// );
+    ///
+    /// // Insert some initial data
+    /// table.insert(vec!["1".to_string(), "Alice".to_string(), "25".to_string(), "85.5".to_string()]).unwrap();
+    /// table.insert(vec!["2".to_string(), "Bob".to_string(), "30".to_string(), "92.0".to_string()]).unwrap();
+    /// table.insert(vec!["3".to_string(), "Charlie".to_string(), "35".to_string(), "75.0".to_string()]).unwrap();
+    ///
+    /// // Filter rows where age is greater than 25 and score is greater than or equal to 85.0
+    /// let nested_condition = NestedCondition::And(
+    ///     Box::new(NestedCondition::Condition(
+    ///         "age".to_string(),
+    ///         ">".to_string(),
+    ///         "25".to_string(),
+    ///     )),
+    ///     Box::new(NestedCondition::Condition(
+    ///         "score".to_string(),
+    ///         ">=".to_string(),
+    ///         "85.0".to_string(),
+    ///     )),
+    /// );
+    /// table.filter_with_nested_conditions(nested_condition).unwrap();
+    /// ```
     pub fn filter_with_nested_conditions(
         &self,
         nested_condition: NestedCondition,
