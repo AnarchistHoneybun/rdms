@@ -144,4 +144,20 @@ fn main() {
         println!("Error updating data: {}", err);
     }
     users_table.show();
+
+    // Example usage
+    let nested_condition = NestedCondition::And(
+        Box::new(NestedCondition::Condition(
+            "age".to_string(),
+            ">=".to_string(),
+            "25".to_string(),
+        )),
+        Box::new(NestedCondition::Condition(
+            "user_name".to_string(),
+            "!=".to_string(),
+            "Alice".to_string(),
+        )),
+    );
+
+    users_table.filter_with_nested_conditions(nested_condition).unwrap();
 }
