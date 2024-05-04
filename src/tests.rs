@@ -91,11 +91,7 @@ mod tests {
 
         // Insert some initial data
         table
-            .insert(vec![
-                "1".to_string(),
-                "Alice".to_string(),
-                "27".to_string(),
-            ])
+            .insert(vec!["1".to_string(), "Alice".to_string(), "27".to_string()])
             .unwrap();
         table
             .insert(vec!["2".to_string(), "Bob".to_string(), "35".to_string()])
@@ -108,26 +104,15 @@ mod tests {
             ])
             .unwrap();
         table
-            .insert(vec![
-                "4".to_string(),
-                "Dave".to_string(),
-                "30".to_string(),
-            ])
+            .insert(vec!["4".to_string(), "Dave".to_string(), "30".to_string()])
             .unwrap();
         table
-            .insert(vec![
-                "5".to_string(),
-                "Eve".to_string(),
-                "30".to_string(),
-            ])
+            .insert(vec!["5".to_string(), "Eve".to_string(), "30".to_string()])
             .unwrap();
 
         // Test updating with a single condition
-        let nested_condition = NestedCondition::Condition(
-            "age".to_string(),
-            "=".to_string(),
-            "30".to_string(),
-        );
+        let nested_condition =
+            NestedCondition::Condition("age".to_string(), "=".to_string(), "30".to_string());
         let result = table.update_with_nested_conditions(
             ("user_name".to_string(), "Sam".to_string()),
             nested_condition,
@@ -161,11 +146,8 @@ mod tests {
         assert!(result.is_ok());
 
         // Test updating with a non-existing column in the condition
-        let nested_condition = NestedCondition::Condition(
-            "invalid".to_string(),
-            "=".to_string(),
-            "value".to_string(),
-        );
+        let nested_condition =
+            NestedCondition::Condition("invalid".to_string(), "=".to_string(), "value".to_string());
         let result = table.update_with_nested_conditions(
             ("user_name".to_string(), "Sam".to_string()),
             nested_condition,
@@ -173,11 +155,8 @@ mod tests {
         assert!(matches!(result, Err(Error::NonExistingColumn(_))));
 
         // Test updating with an invalid operator in the condition
-        let nested_condition = NestedCondition::Condition(
-            "age".to_string(),
-            "invalid".to_string(),
-            "30".to_string(),
-        );
+        let nested_condition =
+            NestedCondition::Condition("age".to_string(), "invalid".to_string(), "30".to_string());
         let result = table.update_with_nested_conditions(
             ("user_name".to_string(), "Sam".to_string()),
             nested_condition,

@@ -670,7 +670,6 @@ impl Table {
         Ok(())
     }
 
-
     /// Prints the structure of the table, including the column names and their corresponding data types.
     ///
     /// # Examples
@@ -1287,4 +1286,3 @@ fn satisfies_condition(
         _ => false, // Unsupported data type or value combination
     }
 }
-

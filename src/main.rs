@@ -52,17 +52,17 @@ fn main() {
     users_table.show();
     print!("\n\n");
 
-    // 4. Project (select) specific columns
+    // 4. Project specific columns
     let column_names = vec!["user_id".to_string(), "age".to_string()];
 
-    println!("Projecting (selecting) specific columns:");
+    println!("Projecting specific columns:");
     if let Err(err) = users_table.project(column_names.clone()) {
         println!("Error selecting data: {}", err);
     }
     print!("\n\n");
 
-    // 5. Project (select) all columns
-    println!("Projecting (selecting) all columns:");
+    // 5. Project all columns
+    println!("Projecting all columns:");
     if let Err(err) = users_table.project(vec![]) {
         println!("Error selecting data: {}", err);
     }
