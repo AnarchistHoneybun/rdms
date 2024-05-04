@@ -74,7 +74,6 @@ pub struct Column {
 }
 
 impl Column {
-
     /// Create a new column with the given name, datatype and default value.
     pub fn new(name: &str, data_type: ColumnDataType, default_value: Option<Value>) -> Self {
         Column {

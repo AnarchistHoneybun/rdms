@@ -23,7 +23,6 @@ enum Operator {
 }
 
 impl Operator {
-
     /// This function converts a string to an Operator enum. It returns an error if the requested string
     /// is not a supported operator.
     fn from_str(s: &str) -> Result<Operator, String> {
@@ -48,7 +47,6 @@ pub enum Error {
     InvalidOperator(String),   // operator_str
     FileError(String),
     InvalidFormat(String),
-    InvalidLogic(String),
 }
 
 /// Implement Display trait for Error enum to allow for custom error messages.
@@ -72,7 +70,6 @@ impl fmt::Display for Error {
             Error::InvalidOperator(operator_str) => write!(f, "Invalid operator: {}", operator_str),
             Error::FileError(msg) => write!(f, "File error: {}", msg),
             Error::InvalidFormat(format) => write!(f, "Invalid format: {}", format),
-            Error::InvalidLogic(logic) => write!(f, "Invalid logic: {}", logic),
         }
     }
 }
@@ -88,8 +85,31 @@ pub struct Table {
 }
 
 impl Table {
-
-    /// Function to create a new table, given a name and a vector of columns.
+    /// Creates a new `Table` instance with the provided table name and columns.
+    ///
+    /// # Arguments
+    ///
+    /// * `table_name` - A string slice representing the name of the table.
+    /// * `columns` - A vector of `Column` instances representing the columns in the table.
+    ///
+    /// # Returns
+    ///
+    /// A `Table` instance with the provided name and columns.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use crate::column::{Column, ColumnDataType};
+    /// use crate::table::Table;
+    ///
+    /// let columns = vec![
+    ///     Column::new("id", ColumnDataType::Integer, None),
+    ///     Column::new("name", ColumnDataType::Text, None),
+    ///     Column::new("age", ColumnDataType::Integer, None),
+    /// ];
+    ///
+    /// let table = Table::new("users", columns);
+    /// ```
     pub fn new(table_name: &str, columns: Vec<Column>) -> Table {
         Table {
             name: table_name.to_string(),
@@ -97,8 +117,29 @@ impl Table {
         }
     }
 
-    /// Function to create a copy of the table. Useful when trying to create backups/perform
-    /// simultaneous edits for comparison.
+    /// Creates a copy of the current `Table` instance.
+    ///
+    /// # Returns
+    ///
+    /// A `Table` instance with the same name and columns as the current instance, but with a deep copy of the data.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use crate::column::{Column, ColumnDataType};
+    /// use crate::table::Table;
+    ///
+    /// let mut table = Table::new("users", vec![
+    ///     Column::new("id", ColumnDataType::Integer, None),
+    ///     Column::new("name", ColumnDataType::Text, None),
+    ///     Column::new("age", ColumnDataType::Integer, None),
+    /// ]);
+    ///
+    /// // Insert some initial data
+    /// table.insert(vec!["1".to_string(), "Alice".to_string(), "25".to_string()]).unwrap();
+    ///
+    /// let table_copy = table.copy();
+    /// ```
     pub fn copy(&self) -> Table {
         let mut new_columns = Vec::with_capacity(self.columns.len());
 
@@ -114,13 +155,38 @@ impl Table {
         }
     }
 
-    /// Function to insert new data into the table. This inserts a whole record at a time,
-    /// therefore will error out if number of provided data points does not match the number of
-    /// columns in the table.
+    /// Inserts a new record into the table.
     ///
-    /// Function flow: accept data -> check if number of data points match number of columns (error
-    /// out if not) -> parse data points (error out if data cannot be parsed
-    /// into the data type of respective column) -> insert parsed data into table.
+    /// # Arguments
+    ///
+    /// * `data` - A vector of `String` values representing the data to be inserted. The number of values must match the number of columns in the table.
+    ///
+    /// # Returns
+    ///
+    /// * `Ok(())` if the insertion operation is successful.
+    /// * `Err(Error)` if an error occurs during the insertion operation.
+    ///
+    /// # Errors
+    ///
+    /// This function can return the following errors:
+    ///
+    /// * `Error::MismatchedColumnCount` - If the number of provided data values does not match the number of columns in the table.
+    /// * `Error::ParseError` - If a data value cannot be parsed into the corresponding column's data type.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use crate::column::{Column, ColumnDataType};
+    /// use crate::table::Table;
+    ///
+    /// let mut table = Table::new("users", vec![
+    ///     Column::new("id", ColumnDataType::Integer, None),
+    ///     Column::new("name", ColumnDataType::Text, None),
+    ///     Column::new("age", ColumnDataType::Integer, None),
+    /// ]);
+    ///
+    /// table.insert(vec!["1".to_string(), "Alice".to_string(), "25".to_string()]).unwrap();
+    /// ```
     pub fn insert(&mut self, data: Vec<String>) -> Result<(), Error> {
         if data.len() != self.columns.len() {
             return Err(Error::MismatchedColumnCount);
@@ -156,11 +222,40 @@ impl Table {
     /// Function to insert a new record, but can be formatted to only insert data into specific columns.
     /// Will fill the other columns with a null value.
     ///
-    /// Function flow: accept column names and data -> check if provided column names exist in the
-    /// table (error out if not) -> check if number of data points match number of column names (error
-    /// out if not) -> parse data points (error out if data cannot be parsed into the data type of
-    /// the respective column) (data points are null on init so columns with no provided
-    /// data end up null on insertion) -> insert parsed data into table.
+    /// # Arguments
+    ///
+    /// * `column_names` - A vector of strings representing the names of the columns to insert data into.
+    /// * `data` - A vector of strings representing the data to be inserted.
+    ///
+    /// # Returns
+    ///
+    /// * `Ok(())` if the insert operation is successful.
+    /// * `Err(Error)` if an error occurs during the insert operation.
+    ///
+    /// # Errors
+    ///
+    /// This function can return the following errors:
+    ///
+    /// * `Error::NonExistingColumns` - If one or more of the provided column names do not exist in the table.
+    /// * `Error::MismatchedColumnCount` - If the number of provided data items does not match the number of provided column names.
+    /// * `Error::ParseError` - If a data item cannot be parsed into the corresponding column's data type.
+    /// # Examples
+    ///
+    /// ```
+    /// use crate::table::Table;
+    ///
+    /// let mut table = Table::new("users", /* ... */);
+    /// // Insert into all columns
+    /// table.insert_with_columns(
+    ///     vec!["user_id".to_string(), "user_name".to_string(), "age".to_string()],
+    ///     vec!["4".to_string(), "David".to_string(), "32".to_string()]
+    /// ).unwrap();
+    /// // Insert into specific columns
+    /// table.insert_with_columns(
+    ///     vec!["user_name".to_string(), "age".to_string()],
+    ///     vec!["Emily".to_string(), "28".to_string()]
+    /// ).unwrap();
+    /// ```
     pub fn insert_with_columns(
         &mut self,
         column_names: Vec<String>,
@@ -210,11 +305,40 @@ impl Table {
         Ok(())
     }
 
-    /// Function to update a particular column for all records.
+    /// Updates the values of a specified column with a new value.
     ///
-    /// Function flow: accept column name and new value -> check if column exists in the table (error
-    /// out if not) -> parse new value (error out if data cannot be parsed into the data type of
-    /// provided column) -> update the entire column with the parsed data point.
+    /// # Arguments
+    ///
+    /// * `column_name` - A string slice representing the name of the column to update.
+    /// * `new_value` - A string slice representing the new value to be set for the column.
+    ///
+    /// # Returns
+    ///
+    /// * `Ok(())` if the update operation is successful.
+    /// * `Err(Error)` if an error occurs during the update operation.
+    ///
+    /// # Errors
+    ///
+    /// This function can return the following error:
+    ///
+    /// * `Error::NonExistingColumn` - If the specified column does not exist in the table.
+    /// * `Error::ParseError` - If the new value cannot be parsed into the corresponding column's data type.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use crate::column::{Column, ColumnDataType};
+    /// use crate::table::Table;
+    ///
+    /// let mut table = Table::new("users", vec![
+    ///     Column::new("id", ColumnDataType::Integer, None),
+    ///     Column::new("name", ColumnDataType::Text, None),
+    ///     Column::new("age", ColumnDataType::Integer, None),
+    /// ]);
+    ///
+    /// // Update the "age" column with the value 30
+    /// table.update_column("age", "30").unwrap();
+    /// ```
     pub fn update_column(&mut self, column_name: &str, new_value: &str) -> Result<(), Error> {
         let update_column = self
             .columns
@@ -239,22 +363,87 @@ impl Table {
         Ok(())
     }
 
-    /// Function to update a particular column for all records, but can be formatted to only update
-    /// records that meet a certain conditions in one or more columns (these can be the same as the column being updated
-    /// or different). Can be conditional on meeting all conditions or any one of the conditions.
+    /// Updates a column with a new value based on a nested condition structure.
     ///
-    /// Function flow: accept column name, new value, conditions, and logic ->
-    /// check if column to be updated exists in the table (error out if not) -> parse new value (error
-    /// out if it cannot be parsed into the data type of the requested column) ->
-    /// iterate over all records, and for each column, check if that is the field that needs update
-    /// -> evaluate all conditions for the record (error out if a condition is invalid based on
-    /// operator, invalid column etc. or if provided logic string is not supported) -> update record
-    /// if requisite conditions are met.
-    pub fn update_with_conditions(
+    /// # Arguments
+    ///
+    /// * `update_input` - A tuple containing the column name to update and the new value.
+    /// * `nested_condition` - A `NestedCondition` enum representing the nested condition structure.
+    ///
+    /// # Returns
+    ///
+    /// * `Ok(())` if the update operation is successful.
+    /// * `Err(Error)` if an error occurs during the update operation.
+    ///
+    /// # Errors
+    ///
+    /// This function can return the following errors:
+    ///
+    /// * `Error::NonExistingColumn` - If the column to be updated does not exist in the table.
+    /// * `Error::ParseError` - If the new value cannot be parsed into the data type of the requested column.
+    /// * `Error::NonExistingColumn` - If a column in the condition does not exist in the table.
+    /// * `Error::InvalidOperator` - If an invalid operator is used in the condition.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use crate::column::{Column, ColumnDataType};
+    /// use crate::table::{NestedCondition, Table};
+    ///
+    /// let mut table = Table::new(
+    ///     "users",
+    ///     vec![
+    ///         Column::new("user_id", ColumnDataType::Integer, None),
+    ///         Column::new("user_name", ColumnDataType::Text, None),
+    ///         Column::new("age", ColumnDataType::Integer, None),
+    ///     ],
+    /// );
+    ///
+    /// // Insert some initial data
+    /// table.insert(vec!["1".to_string(), "Alice".to_string(), "27".to_string()]).unwrap();
+    /// table.insert(vec!["2".to_string(), "Bob".to_string(), "35".to_string()]).unwrap();
+    /// table.insert(vec!["3".to_string(), "Charlie".to_string(), "19".to_string()]).unwrap();
+    ///
+    /// // Update the "user_name" column with "Sam" for records where "age" is 30
+    /// let nested_condition = NestedCondition::Condition(
+    ///     "age".to_string(),
+    ///     "=".to_string(),
+    ///     "30".to_string(),
+    /// );
+    /// table.update_with_nested_conditions(
+    ///     ("user_name".to_string(), "Sam".to_string()),
+    ///     nested_condition,
+    /// ).unwrap();
+    ///
+    /// // Update the "user_name" column with "Sam" for records where "age" is 30 AND "user_id" is 2 OR 3
+    /// let nested_condition = NestedCondition::And(
+    ///     Box::new(NestedCondition::Condition(
+    ///         "age".to_string(),
+    ///         "=".to_string(),
+    ///         "30".to_string(),
+    ///     )),
+    ///     Box::new(NestedCondition::Or(
+    ///         Box::new(NestedCondition::Condition(
+    ///             "user_id".to_string(),
+    ///             "=".to_string(),
+    ///             "2".to_string(),
+    ///         )),
+    ///         Box::new(NestedCondition::Condition(
+    ///             "user_id".to_string(),
+    ///             "=".to_string(),
+    ///             "3".to_string(),
+    ///         )),
+    ///     )),
+    /// );
+    /// table.update_with_nested_conditions(
+    ///     ("user_name".to_string(), "Sam".to_string()),
+    ///     nested_condition,
+    /// ).unwrap();
+    /// ```
+    pub fn update_with_nested_conditions(
         &mut self,
         update_input: (String, String),
-        conditions: Vec<(String, String, String)>,
-        logic: &str,
+        nested_condition: NestedCondition,
     ) -> Result<(), Error> {
         // Validate column name in update_input
         let update_column = self
@@ -294,7 +483,7 @@ impl Table {
                     Vec::new(),
                     |mut acc, (i, value)| {
                         let update_record =
-                            evaluate_conditions(&columns_clone, &conditions, i, logic)?;
+                            evaluate_nested_conditions(&nested_condition, &columns_clone, i)?;
 
                         if update_record {
                             acc.push(new_value.clone());
@@ -311,10 +500,28 @@ impl Table {
         Ok(())
     }
 
-    /// Function to print the entire record to the terminal.
+    /// Prints the entire table data to the console.
     ///
-    /// Function flow: find the largest column name, so rest of the columns can be padded
-    /// accordingly -> print the data out line by line, column by column.
+    /// The function finds the maximum length of column names to properly align the data, and then prints the column names, a separator line, and the data rows. If the number of rows varies across columns, the function will print blank spaces for missing values.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use crate::column::{Column, ColumnDataType};
+    /// use crate::table::Table;
+    ///
+    /// let mut table = Table::new("users", vec![
+    ///     Column::new("id", ColumnDataType::Integer, None),
+    ///     Column::new("name", ColumnDataType::Text, None),
+    ///     Column::new("age", ColumnDataType::Integer, None),
+    /// ]);
+    ///
+    /// // Insert some initial data
+    /// table.insert(vec!["1".to_string(), "Alice".to_string(), "25".to_string()]).unwrap();
+    /// table.insert(vec!["2".to_string(), "Bob".to_string(), "30".to_string()]).unwrap();
+    ///
+    /// table.show();
+    /// ```
     pub fn show(&self) {
         // Find the maximum length of column names
         let max_column_name_len = self
@@ -364,10 +571,32 @@ impl Table {
     /// Function to display only requested columns from the table (if called with an empty column
     /// list, will call the show function).
     ///
-    /// Function flow: check if column names are provided -> check if provided column names exist in
-    /// the table (error out if not) -> find the maximum length of requested column names -> print
-    /// requested columns out to the terminal.
-    pub fn select(&self, column_names: Vec<String>) -> Result<(), Error> {
+    /// # Arguments
+    ///
+    /// * `column_names` - A vector of strings representing the names of the columns to display.
+    ///
+    /// # Returns
+    ///
+    /// * `Ok(())` if the projection operation is successful.
+    /// * `Err(Error)` if an error occurs during the projection operation.
+    ///
+    /// # Errors
+    ///
+    /// This function can return the following error:
+    ///
+    /// * `Error::NonExistingColumns` - If one or more of the provided column names do not exist in the table.
+    /// # Examples
+    ///
+    /// ```
+    /// use crate::table::Table;
+    ///
+    /// let mut table = Table::new("users", /* ... */);
+    /// // Display all columns
+    /// table.project(vec![]).unwrap();
+    /// // Display specific columns
+    /// table.project(vec!["user_id".to_string(), "age".to_string()]).unwrap();
+    /// ```
+    pub fn project(&self, column_names: Vec<String>) -> Result<(), Error> {
         if column_names.is_empty() {
             // If no column names are provided, call the show function
             self.show();
@@ -441,7 +670,22 @@ impl Table {
         Ok(())
     }
 
-    /// Function to provide the structure of the table. Lists all the columns and their data types.
+    /// Prints the structure of the table, including the column names and their corresponding data types.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use crate::column::{Column, ColumnDataType};
+    /// use crate::table::Table;
+    ///
+    /// let table = Table::new("users", vec![
+    ///     Column::new("id", ColumnDataType::Integer, None),
+    ///     Column::new("name", ColumnDataType::Text, None),
+    ///     Column::new("age", ColumnDataType::Integer, None),
+    /// ]);
+    ///
+    /// table.describe();
+    /// ```
     pub fn describe(&self) {
         println!("Table: {}", self.name);
         println!();
@@ -477,9 +721,48 @@ impl Table {
         println!();
     }
 
-    /// Function to count the number of records in the table. Is able to accept a column name as
-    /// input. If no column name is provided, returns the total record count. Otherwise, returns the total
-    /// number of not-null values in that column for that table.
+    /// Counts the number of records or non-null values in a specific column or the entire table.
+    ///
+    /// # Arguments
+    ///
+    /// * `column_name` - An optional string representing the name of the column to count non-null values for. If `None`, the function will count the total number of records in the table.
+    ///
+    /// # Returns
+    ///
+    /// * `Ok(usize)` - The count of records or non-null values, depending on whether a column name was provided or not.
+    /// * `Err(Error)` - An error if the provided column name does not exist in the table.
+    ///
+    /// # Errors
+    ///
+    /// This function can return the following error:
+    ///
+    /// * `Error::NonExistingColumn` - If the provided column name does not exist in the table.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use crate::column::{Column, ColumnDataType};
+    /// use crate::table::Table;
+    ///
+    /// let mut table = Table::new("users", vec![
+    ///     Column::new("id", ColumnDataType::Integer, None),
+    ///     Column::new("name", ColumnDataType::Text, None),
+    ///     Column::new("age", ColumnDataType::Integer, None),
+    /// ]);
+    ///
+    /// // Insert some initial data
+    /// table.insert(vec!["1".to_string(), "Alice".to_string(), "25".to_string()]).unwrap();
+    /// table.insert(vec!["2".to_string(), "Bob".to_string(), "30".to_string()]).unwrap();
+    /// table.insert(vec!["3".to_string(), "Charlie".to_string(), "".to_string()]).unwrap(); // null age
+    ///
+    /// // Count total records
+    /// let total_count = table.count(None).unwrap();
+    /// assert_eq!(total_count, 3);
+    ///
+    /// // Count non-null values in "age" column
+    /// let age_count = table.count(Some("age".to_string())).unwrap();
+    /// assert_eq!(age_count, 2);
+    /// ```
     pub fn count(&self, column_name: Option<String>) -> Result<usize, Error> {
         return if let Some(column_name) = column_name {
             // Check if the provided column name exists
@@ -506,7 +789,36 @@ impl Table {
         };
     }
 
-    /// Function to export the table to a csv or txt file based on input.
+    /// Function to export the table to a CSV or TXT file based on input.
+    ///
+    /// # Arguments
+    ///
+    /// * `file_name` - A string representing the name of the file to export.
+    /// * `format` - A string representing the format of the file, either "csv" or "txt".
+    ///
+    /// # Returns
+    ///
+    /// * `Ok(())` if the export operation is successful.
+    /// * `Err(Error)` if an error occurs during the export operation.
+    ///
+    /// # Errors
+    ///
+    /// This function can return the following errors:
+    ///
+    /// * `Error::FileError` - If the file fails to create or write.
+    /// * `Error::InvalidFormat` - If the provided format is not "csv" or "txt".
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use crate::table::Table;
+    ///
+    /// let table = Table::new("users", /* ... */);
+    /// // Export to CSV
+    /// table.export_table("users.csv", "csv").unwrap();
+    /// // Export to TXT
+    /// table.export_table("users.txt", "txt").unwrap();
+    /// ```
     pub fn export_table(&self, file_name: &str, format: &str) -> Result<(), Error> {
         let path = Path::new(file_name);
         let file = match File::create(path) {
@@ -667,8 +979,36 @@ impl Table {
         Ok(())
     }
 
-    /// Function to import a table stored in csv or txt format and define a table variable from it.
+    /// Imports a table stored in CSV or TXT format and defines a table variable from it.
     /// Only reads data that is stored in the same format as exported by the export function.
+    ///
+    /// # Arguments
+    ///
+    /// * `file_name` - A string representing the name of the file to import.
+    /// * `format` - A string representing the format of the file, either "csv" or "txt".
+    ///
+    /// # Returns
+    ///
+    /// * `Ok(Table)` - A `Table` instance created from the imported data if the import operation is successful.
+    /// * `Err(Error)` - An `Error` if the import operation fails, e.g., file error, invalid format, or parsing error.
+    ///
+    /// # Errors
+    ///
+    /// This function can return the following errors:
+    ///
+    /// * `Error::FileError` - If the file fails to open or read.
+    /// * `Error::InvalidFormat` - If the provided format is not "csv" or "txt", or if the file has an invalid format.
+    /// * `Error::MismatchedColumnCount` - If the number of values in a row does not match the number of columns.
+    /// * `Error::ParseError` - If a value in the file cannot be parsed into the corresponding column's data type.
+    /// # Examples
+    ///
+    /// ```
+    /// use crate::table::Table;
+    ///
+    /// let table = Table::import_table("data.csv", "csv").unwrap();
+    /// // or
+    /// let table = Table::import_table("data.txt", "txt").unwrap();
+    /// ```
     pub fn import_table(file_name: &str, format: &str) -> Result<Table, Error> {
         let path = Path::new(file_name);
         let file = match File::open(path) {
@@ -837,145 +1177,27 @@ impl Table {
             _ => Err(Error::InvalidFormat(format.to_string())),
         }
     }
-
-    /// Updates a column with a new value based on a nested condition structure.
-    ///
-    /// # Arguments
-    ///
-    /// * `update_input` - A tuple containing the column name to update and the new value.
-    /// * `nested_condition` - A `NestedCondition` enum representing the nested condition structure.
-    ///
-    /// # Returns
-    ///
-    /// * `Ok(())` if the update operation is successful.
-    /// * `Err(Error)` if an error occurs during the update operation.
-    ///
-    /// # Errors
-    ///
-    /// This function can return the following errors:
-    ///
-    /// * `Error::NonExistingColumn` - If the column to be updated does not exist in the table.
-    /// * `Error::ParseError` - If the new value cannot be parsed into the data type of the requested column.
-    /// * `Error::NonExistingColumn` - If a column in the condition does not exist in the table.
-    /// * `Error::InvalidOperator` - If an invalid operator is used in the condition.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use crate::column::{Column, ColumnDataType};
-    /// use crate::table::{NestedCondition, Table};
-    ///
-    /// let mut table = Table::new(
-    ///     "users",
-    ///     vec![
-    ///         Column::new("user_id", ColumnDataType::Integer, None),
-    ///         Column::new("user_name", ColumnDataType::Text, None),
-    ///         Column::new("age", ColumnDataType::Integer, None),
-    ///     ],
-    /// );
-    ///
-    /// // Insert some initial data
-    /// table.insert(vec!["1".to_string(), "Alice".to_string(), "27".to_string()]).unwrap();
-    /// table.insert(vec!["2".to_string(), "Bob".to_string(), "35".to_string()]).unwrap();
-    /// table.insert(vec!["3".to_string(), "Charlie".to_string(), "19".to_string()]).unwrap();
-    ///
-    /// // Update the "user_name" column with "Sam" for records where "age" is 30
-    /// let nested_condition = NestedCondition::Condition(
-    ///     "age".to_string(),
-    ///     "=".to_string(),
-    ///     "30".to_string(),
-    /// );
-    /// table.update_with_nested_conditions(
-    ///     ("user_name".to_string(), "Sam".to_string()),
-    ///     nested_condition,
-    /// ).unwrap();
-    ///
-    /// // Update the "user_name" column with "Sam" for records where "age" is 30 AND "user_id" is 2 OR 3
-    /// let nested_condition = NestedCondition::And(
-    ///     Box::new(NestedCondition::Condition(
-    ///         "age".to_string(),
-    ///         "=".to_string(),
-    ///         "30".to_string(),
-    ///     )),
-    ///     Box::new(NestedCondition::Or(
-    ///         Box::new(NestedCondition::Condition(
-    ///             "user_id".to_string(),
-    ///             "=".to_string(),
-    ///             "2".to_string(),
-    ///         )),
-    ///         Box::new(NestedCondition::Condition(
-    ///             "user_id".to_string(),
-    ///             "=".to_string(),
-    ///             "3".to_string(),
-    ///         )),
-    ///     )),
-    /// );
-    /// table.update_with_nested_conditions(
-    ///     ("user_name".to_string(), "Sam".to_string()),
-    ///     nested_condition,
-    /// ).unwrap();
-    /// ```
-    pub fn update_with_nested_conditions(
-        &mut self,
-        update_input: (String, String),
-        nested_condition: NestedCondition,
-    ) -> Result<(), Error> {
-        // Validate column name in update_input
-        let update_column = self
-            .columns
-            .iter()
-            .find(|c| c.name == update_input.0)
-            .ok_or(Error::NonExistingColumn(update_input.0.clone()))?;
-
-        // Parse new_value according to the column's data type
-        let new_value = match update_column.data_type {
-            ColumnDataType::Integer => update_input
-                .1
-                .parse::<i64>()
-                .map(Value::Integer)
-                .map_err(|_| Error::ParseError(1, update_input.1.clone()))?,
-            ColumnDataType::Float => update_input
-                .1
-                .parse::<f64>()
-                .map(Value::Float)
-                .map_err(|_| Error::ParseError(1, update_input.1.clone()))?,
-            ColumnDataType::Text => Value::Text(update_input.1),
-        };
-
-        let update_column_name = self
-            .columns
-            .iter()
-            .find(|c| c.name == update_input.0)
-            .ok_or(Error::NonExistingColumn(update_input.0.clone()))?
-            .name
-            .clone();
-
-        let columns_clone = self.columns.clone();
-
-        for record in &mut self.columns {
-            if record.name == update_column_name {
-                record.data = record.data.iter().enumerate().try_fold(
-                    Vec::new(),
-                    |mut acc, (i, value)| {
-                        let update_record =
-                            evaluate_nested_conditions(&nested_condition, &columns_clone, i)?;
-
-                        if update_record {
-                            acc.push(new_value.clone());
-                        } else {
-                            acc.push(value.clone());
-                        }
-
-                        Ok(acc)
-                    },
-                )?;
-            }
-        }
-
-        Ok(())
-    }
 }
 
+/// Evaluates a nested condition structure against a specific row in the table.
+///
+/// # Arguments
+///
+/// * `condition` - A reference to the `NestedCondition` enum representing the nested condition structure.
+/// * `columns` - A slice of `Column` instances representing the columns in the table.
+/// * `row_idx` - The index of the row to evaluate the conditions against.
+///
+/// # Returns
+///
+/// * `Ok(bool)` - `true` if the row satisfies the nested condition, `false` otherwise.
+/// * `Err(Error)` - An error if a column in the condition does not exist in the table or if an invalid operator is used.
+///
+/// # Errors
+///
+/// This function can return the following errors:
+///
+/// * `Error::NonExistingColumn` - If a column in the condition does not exist in the table.
+/// * `Error::InvalidOperator` - If an invalid operator is used in the condition.
 fn evaluate_nested_conditions(
     condition: &NestedCondition,
     columns: &[Column],
@@ -1018,9 +1240,18 @@ fn evaluate_nested_conditions(
     }
 }
 
-/// Function to check if a given column satisfies a particular condition based on
-/// provided operator, reference value and the column it is conditional on. Will error out
-/// if any of these are not properly formatted or are un-supported data types.
+/// Checks if a value satisfies a specific condition based on the provided operator and condition value.
+///
+/// # Arguments
+///
+/// * `value` - A reference to the `Value` enum representing the value to check.
+/// * `cond_column_data_type` - The `ColumnDataType` of the column the condition is based on.
+/// * `cond_value` - A string slice representing the condition value.
+/// * `operator` - A reference to the `Operator` enum representing the comparison operator.
+///
+/// # Returns
+///
+/// * `bool` - `true` if the value satisfies the condition, `false` otherwise.
 fn satisfies_condition(
     value: &Value,
     cond_column_data_type: ColumnDataType,
@@ -1054,55 +1285,4 @@ fn satisfies_condition(
         },
         _ => false, // Unsupported data type or value combination
     }
-}
-
-/// Function to batch evaluate multiple conditions on a column, calls the satisfies_condition
-/// function for all provided conditions and returns a flag.
-fn evaluate_conditions(
-    columns: &[Column],
-    conditions: &[(String, String, String)],
-    row_idx: usize,
-    logic: &str,
-) -> Result<bool, Error> {
-    let mut update_record = if logic.eq_ignore_ascii_case("and") {
-        true
-    } else if logic.eq_ignore_ascii_case("or") {
-        false
-    } else {
-        return Err(Error::InvalidLogic(logic.to_string()));
-    };
-
-    for (cond_column_name, cond_value, operator_str) in conditions {
-        let cond_column_data_type = columns
-            .iter()
-            .find(|c| c.name == *cond_column_name)
-            .ok_or(Error::NonExistingColumn(cond_column_name.clone()))?
-            .data_type
-            .clone();
-
-        let operator = Operator::from_str(&operator_str)
-            .map_err(|_e| Error::InvalidOperator(operator_str.clone()))?;
-
-        let ref_value = columns
-            .iter()
-            .find(|c| c.name == *cond_column_name)
-            .ok_or(Error::NonExistingColumn(cond_column_name.clone()))?
-            .data
-            .get(row_idx)
-            .cloned();
-
-        let condition_satisfied = ref_value.map_or(false, |v| {
-            satisfies_condition(&v, cond_column_data_type, &cond_value, &operator)
-        });
-
-        if logic.eq_ignore_ascii_case("and") {
-            update_record &= condition_satisfied;
-        } else if logic.eq_ignore_ascii_case("or") {
-            update_record |= condition_satisfied;
-        } else {
-            return Err(Error::InvalidLogic(logic.to_string()));
-        }
-    }
-
-    Ok(update_record)
 }
