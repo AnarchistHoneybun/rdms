@@ -16,6 +16,7 @@ pub enum NestedCondition {
 #[derive(Debug, PartialEq)]
 enum Operator {
     Equal,
+    NotEqual,
     LessThan,
     GreaterThan,
     LessThanOrEqual,
@@ -28,6 +29,7 @@ impl Operator {
     fn from_str(s: &str) -> Result<Operator, String> {
         match s {
             "=" => Ok(Operator::Equal),
+            "!=" => Ok(Operator::NotEqual),
             "<" => Ok(Operator::LessThan),
             ">" => Ok(Operator::GreaterThan),
             "<=" => Ok(Operator::LessThanOrEqual),
@@ -1177,6 +1179,57 @@ impl Table {
             _ => Err(Error::InvalidFormat(format.to_string())),
         }
     }
+
+    pub fn filter_with_nested_conditions(
+        &self,
+        nested_condition: NestedCondition,
+    ) -> Result<(), Error> {
+        let columns_clone = self.columns.clone();
+
+        // Find the maximum length of column names
+        let max_column_name_len = self
+            .columns
+            .iter()
+            .map(|column| column.name.len())
+            .max()
+            .unwrap_or(0);
+
+        // Print the column names
+        for column in &self.columns {
+            let padded_name = format!("{:>width$}", column.name, width = max_column_name_len);
+            print!("{} ", padded_name);
+        }
+        println!();
+
+        // Print a separator line
+        let separator_line: String = std::iter::repeat("-")
+            .take(max_column_name_len * self.columns.len() + self.columns.len() - 1)
+            .collect();
+        println!("{}", separator_line);
+
+        // Iterate over each row and print rows that satisfy the conditions
+        for (row_idx, _) in self.columns[0].data.iter().enumerate() {
+            let satisfies_condition =
+                evaluate_nested_conditions(&nested_condition, &columns_clone, row_idx)?;
+
+            if satisfies_condition {
+                for (_col_idx, column) in self.columns.iter().enumerate() {
+                    if row_idx < column.data.len() {
+                        let value = &column.data[row_idx];
+                        let padded_value =
+                            format!("{:>width$}", value, width = max_column_name_len);
+                        print!("{} ", padded_value);
+                    } else {
+                        let padding = " ".repeat(max_column_name_len);
+                        print!("{} ", padding);
+                    }
+                }
+                println!();
+            }
+        }
+
+        Ok(())
+    }
 }
 
 /// Evaluates a nested condition structure against a specific row in the table.
@@ -1263,6 +1316,7 @@ fn satisfies_condition(
             let cond_value: i64 = cond_value.parse().unwrap();
             match operator {
                 Operator::Equal => val == &cond_value,
+                Operator::NotEqual => val != &cond_value,
                 Operator::LessThan => val < &cond_value,
                 Operator::GreaterThan => val > &cond_value,
                 Operator::LessThanOrEqual => val <= &cond_value,
@@ -1273,6 +1327,7 @@ fn satisfies_condition(
             let cond_value: f64 = cond_value.parse().unwrap();
             match operator {
                 Operator::Equal => val == &cond_value,
+                Operator::NotEqual => val != &cond_value,
                 Operator::LessThan => val < &cond_value,
                 Operator::GreaterThan => val > &cond_value,
                 Operator::LessThanOrEqual => val <= &cond_value,
@@ -1281,6 +1336,7 @@ fn satisfies_condition(
         }
         (Value::Text(val), ColumnDataType::Text) => match operator {
             Operator::Equal => val == cond_value,
+            Operator::NotEqual => val != cond_value,
             _ => false, // Other operators not supported for Text data type
         },
         _ => false, // Unsupported data type or value combination
