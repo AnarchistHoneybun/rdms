@@ -207,7 +207,7 @@ mod tests {
     }
 
     #[test]
-    fn test_select() {
+    fn test_project() {
         let mut table = Table::new(
             "test_table",
             vec![
@@ -237,15 +237,15 @@ mod tests {
             .unwrap();
 
         // Test selecting all columns
-        let result = table.select(vec![]);
+        let result = table.project(vec![]);
         assert!(result.is_ok());
 
         // Test selecting specific columns
-        let result = table.select(vec!["id".to_string(), "score".to_string()]);
+        let result = table.project(vec!["id".to_string(), "score".to_string()]);
         assert!(result.is_ok());
 
         // Test selecting non-existing columns
-        let result = table.select(vec!["invalid".to_string()]);
+        let result = table.project(vec!["invalid".to_string()]);
         assert!(matches!(result, Err(Error::NonExistingColumns(_))));
     }
 

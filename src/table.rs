@@ -156,11 +156,40 @@ impl Table {
     /// Function to insert a new record, but can be formatted to only insert data into specific columns.
     /// Will fill the other columns with a null value.
     ///
-    /// Function flow: accept column names and data -> check if provided column names exist in the
-    /// table (error out if not) -> check if number of data points match number of column names (error
-    /// out if not) -> parse data points (error out if data cannot be parsed into the data type of
-    /// the respective column) (data points are null on init so columns with no provided
-    /// data end up null on insertion) -> insert parsed data into table.
+    /// # Arguments
+    ///
+    /// * `column_names` - A vector of strings representing the names of the columns to insert data into.
+    /// * `data` - A vector of strings representing the data to be inserted.
+    ///
+    /// # Returns
+    ///
+    /// * `Ok(())` if the insert operation is successful.
+    /// * `Err(Error)` if an error occurs during the insert operation.
+    ///
+    /// # Errors
+    ///
+    /// This function can return the following errors:
+    ///
+    /// * `Error::NonExistingColumns` - If one or more of the provided column names do not exist in the table.
+    /// * `Error::MismatchedColumnCount` - If the number of provided data items does not match the number of provided column names.
+    /// * `Error::ParseError` - If a data item cannot be parsed into the corresponding column's data type.
+    /// # Examples
+    ///
+    /// ```
+    /// use crate::table::Table;
+    ///
+    /// let mut table = Table::new("users", /* ... */);
+    /// // Insert into all columns
+    /// table.insert_with_columns(
+    ///     vec!["user_id".to_string(), "user_name".to_string(), "age".to_string()],
+    ///     vec!["4".to_string(), "David".to_string(), "32".to_string()]
+    /// ).unwrap();
+    /// // Insert into specific columns
+    /// table.insert_with_columns(
+    ///     vec!["user_name".to_string(), "age".to_string()],
+    ///     vec!["Emily".to_string(), "28".to_string()]
+    /// ).unwrap();
+    /// ```
     pub fn insert_with_columns(
         &mut self,
         column_names: Vec<String>,
@@ -364,10 +393,32 @@ impl Table {
     /// Function to display only requested columns from the table (if called with an empty column
     /// list, will call the show function).
     ///
-    /// Function flow: check if column names are provided -> check if provided column names exist in
-    /// the table (error out if not) -> find the maximum length of requested column names -> print
-    /// requested columns out to the terminal.
-    pub fn select(&self, column_names: Vec<String>) -> Result<(), Error> {
+    /// # Arguments
+    ///
+    /// * `column_names` - A vector of strings representing the names of the columns to display.
+    ///
+    /// # Returns
+    ///
+    /// * `Ok(())` if the projection operation is successful.
+    /// * `Err(Error)` if an error occurs during the projection operation.
+    ///
+    /// # Errors
+    ///
+    /// This function can return the following error:
+    ///
+    /// * `Error::NonExistingColumns` - If one or more of the provided column names do not exist in the table.
+    /// # Examples
+    ///
+    /// ```
+    /// use crate::table::Table;
+    ///
+    /// let mut table = Table::new("users", /* ... */);
+    /// // Display all columns
+    /// table.project(vec![]).unwrap();
+    /// // Display specific columns
+    /// table.project(vec!["user_id".to_string(), "age".to_string()]).unwrap();
+    /// ```
+    pub fn project(&self, column_names: Vec<String>) -> Result<(), Error> {
         if column_names.is_empty() {
             // If no column names are provided, call the show function
             self.show();
@@ -506,7 +557,36 @@ impl Table {
         };
     }
 
-    /// Function to export the table to a csv or txt file based on input.
+    /// Function to export the table to a CSV or TXT file based on input.
+    ///
+    /// # Arguments
+    ///
+    /// * `file_name` - A string representing the name of the file to export.
+    /// * `format` - A string representing the format of the file, either "csv" or "txt".
+    ///
+    /// # Returns
+    ///
+    /// * `Ok(())` if the export operation is successful.
+    /// * `Err(Error)` if an error occurs during the export operation.
+    ///
+    /// # Errors
+    ///
+    /// This function can return the following errors:
+    ///
+    /// * `Error::FileError` - If the file fails to create or write.
+    /// * `Error::InvalidFormat` - If the provided format is not "csv" or "txt".
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use crate::table::Table;
+    ///
+    /// let table = Table::new("users", /* ... */);
+    /// // Export to CSV
+    /// table.export_table("users.csv", "csv").unwrap();
+    /// // Export to TXT
+    /// table.export_table("users.txt", "txt").unwrap();
+    /// ```
     pub fn export_table(&self, file_name: &str, format: &str) -> Result<(), Error> {
         let path = Path::new(file_name);
         let file = match File::create(path) {
@@ -667,8 +747,36 @@ impl Table {
         Ok(())
     }
 
-    /// Function to import a table stored in csv or txt format and define a table variable from it.
+    /// Imports a table stored in CSV or TXT format and defines a table variable from it.
     /// Only reads data that is stored in the same format as exported by the export function.
+    ///
+    /// # Arguments
+    ///
+    /// * `file_name` - A string representing the name of the file to import.
+    /// * `format` - A string representing the format of the file, either "csv" or "txt".
+    ///
+    /// # Returns
+    ///
+    /// * `Ok(Table)` - A `Table` instance created from the imported data if the import operation is successful.
+    /// * `Err(Error)` - An `Error` if the import operation fails, e.g., file error, invalid format, or parsing error.
+    ///
+    /// # Errors
+    ///
+    /// This function can return the following errors:
+    ///
+    /// * `Error::FileError` - If the file fails to open or read.
+    /// * `Error::InvalidFormat` - If the provided format is not "csv" or "txt", or if the file has an invalid format.
+    /// * `Error::MismatchedColumnCount` - If the number of values in a row does not match the number of columns.
+    /// * `Error::ParseError` - If a value in the file cannot be parsed into the corresponding column's data type.
+    /// # Examples
+    ///
+    /// ```
+    /// use crate::table::Table;
+    ///
+    /// let table = Table::import_table("data.csv", "csv").unwrap();
+    /// // or
+    /// let table = Table::import_table("data.txt", "txt").unwrap();
+    /// ```
     pub fn import_table(file_name: &str, format: &str) -> Result<Table, Error> {
         let path = Path::new(file_name);
         let file = match File::open(path) {

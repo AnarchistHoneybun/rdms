@@ -50,11 +50,11 @@ fn main() {
 
     let column_names = vec!["user_id".to_string(), "age".to_string()];
 
-    if let Err(err) = users_table.select(column_names) {
+    if let Err(err) = users_table.project(column_names) {
         println!("Error selecting data: {}", err);
     }
 
-    if let Err(err) = users_table.select(vec![]) {
+    if let Err(err) = users_table.project(vec![]) {
         println!("Error selecting data: {}", err);
     }
 
