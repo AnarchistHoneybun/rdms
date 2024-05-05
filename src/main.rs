@@ -159,5 +159,28 @@ fn main() {
         )),
     );
 
-    users_table.filter_with_nested_conditions(nested_condition).unwrap();
+    users_table
+        .filter_with_nested_conditions(nested_condition)
+        .unwrap();
+
+    // 12. Filter and project table
+    println!("Filtering and projecting table:");
+    let column_names = vec!["user_id".to_string()];
+    let nested_condition = NestedCondition::And(
+        Box::new(NestedCondition::Condition(
+            "age".to_string(),
+            ">=".to_string(),
+            "30".to_string(),
+        )),
+        Box::new(NestedCondition::Condition(
+            "user_name".to_string(),
+            "=".to_string(),
+            "Sam".to_string(),
+        )),
+    );
+
+    if let Err(err) = users_table.filter_and_project(column_names, nested_condition) {
+        println!("Error filtering and projecting data: {}", err);
+    }
+    print!("\n\n");
 }
