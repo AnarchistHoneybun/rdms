@@ -4,7 +4,14 @@ An attempt at creating a relational database management system in Rust.
 Couple of things to note:
 - I don't know why I'm naming this cypriot.
 - I am referring to 0 books and/or papers for this, just pure delusion that I can do this.
-- This project has already made me cry thrice.
+- This project has already made me cry ~~thrice~~ five times.
+
+<div class="callout" style="background-color: #f8d7da; color: #721c24; border-color: #f5c6cb;">
+  <strong>⚠️</strong> Tests and Docs are not up to date and might not catch up
+for a while! Please bear with me I'm trying to accommodate new features and
+it's not feasible to update them for every change.
+</div>
+
 
 ## The State of Things
 Currently, what we have is:
