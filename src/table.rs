@@ -883,6 +883,19 @@ impl Table {
             print!("{} ", padded_data_type);
         }
         println!();
+
+        // Print primary key information
+        for column in &self.columns {
+            let primary_key_info = if column.is_primary_key {
+                "prim_key".to_string()
+            } else {
+                "nt_prim_key".to_string()
+            };
+            let padded_primary_key_info =
+                format!("{:<width$}", primary_key_info, width = max_column_name_len);
+            print!("{} ", padded_primary_key_info);
+        }
+        println!();
     }
 
     /// Counts the number of records or non-null values in a specific column or the entire table.
@@ -1021,6 +1034,26 @@ impl Table {
                     .write_all(b"\n")
                     .map_err(|e| Error::FileError(format!("Failed to write to file: {}", e)))?;
 
+                // Write primary key information
+                let primary_key_info = self
+                    .columns
+                    .iter()
+                    .map(|c| {
+                        if c.is_primary_key {
+                            "prim_key".to_string()
+                        } else {
+                            "nt_prim_key".to_string()
+                        }
+                    })
+                    .collect::<Vec<_>>()
+                    .join(",");
+                writer
+                    .write_all(primary_key_info.as_bytes())
+                    .map_err(|e| Error::FileError(format!("Failed to write to file: {}", e)))?;
+                writer
+                    .write_all(b"\n")
+                    .map_err(|e| Error::FileError(format!("Failed to write to file: {}", e)))?;
+
                 // Write data rows
                 let max_rows = self
                     .columns
@@ -1081,6 +1114,26 @@ impl Table {
                         format!("{:<width$}", column.data_type, width = max_column_name_len);
                     writer
                         .write_all(padded_data_type.as_bytes())
+                        .map_err(|e| Error::FileError(format!("Failed to write to file: {}", e)))?;
+                    writer
+                        .write_all(b" ")
+                        .map_err(|e| Error::FileError(format!("Failed to write to file: {}", e)))?;
+                }
+                writer
+                    .write_all(b"\n")
+                    .map_err(|e| Error::FileError(format!("Failed to write to file: {}", e)))?;
+
+                // Print primary key information
+                for column in &self.columns {
+                    let primary_key_info = if column.is_primary_key {
+                        "prim_key".to_string()
+                    } else {
+                        "nt_prim_key".to_string()
+                    };
+                    let padded_primary_key_info =
+                        format!("{:<width$}", primary_key_info, width = max_column_name_len);
+                    writer
+                        .write_all(padded_primary_key_info.as_bytes())
                         .map_err(|e| Error::FileError(format!("Failed to write to file: {}", e)))?;
                     writer
                         .write_all(b" ")
@@ -1216,11 +1269,38 @@ impl Table {
                     }
                 };
 
-                // Create columns with the corresponding data types
+                // Read the primary key information
+                let primary_key_info: Vec<bool> = match lines.next() {
+                    Some(primary_key_line) => primary_key_line
+                        .split(',')
+                        .map(|s| {
+                            Ok(match s {
+                                "prim_key" => true,
+                                "nt_prim_key" => false,
+                                _ => {
+                                    return Err(Error::InvalidFormat(format!(
+                                        "Invalid primary key information: {}",
+                                        s
+                                    )))
+                                }
+                            })
+                        })
+                        .collect::<Result<Vec<_>, _>>()?,
+                    None => {
+                        return Err(Error::InvalidFormat(
+                            "File is missing primary key information".to_string(),
+                        ))
+                    }
+                };
+
+                // Create columns with the corresponding data types and primary key information
                 let mut columns: Vec<Column> = column_names
                     .iter()
                     .zip(column_data_types.iter())
-                    .map(|(name, data_type)| Column::new(name, data_type.clone(), None))
+                    .zip(primary_key_info.iter())
+                    .map(|((name, data_type), is_primary_key)| {
+                        Column::new(name, data_type.clone(), None, *is_primary_key)
+                    })
                     .collect();
 
                 // Read the data rows
@@ -1254,7 +1334,7 @@ impl Table {
                 }
 
                 let table_name = file_name.to_string();
-                Ok(Table::new(&table_name, columns))
+                Table::new(&table_name, columns)
             }
             "txt" => {
                 let reader = BufReader::new(file);
@@ -1294,15 +1374,42 @@ impl Table {
                     }
                 };
 
-                // Create columns with the corresponding data types
+                // Read the primary key information
+                let primary_key_info: Vec<bool> = match lines.next() {
+                    Some(primary_key_line) => primary_key_line
+                        .split_whitespace()
+                        .map(|s| {
+                            Ok(match s {
+                                "prim_key" => true,
+                                "nt_prim_key" => false,
+                                _ => {
+                                    return Err(Error::InvalidFormat(format!(
+                                        "Invalid primary key information: {}",
+                                        s
+                                    )))
+                                }
+                            })
+                        })
+                        .collect::<Result<Vec<_>, _>>()?,
+                    None => {
+                        return Err(Error::InvalidFormat(
+                            "File is missing primary key information".to_string(),
+                        ))
+                    }
+                };
+
+                // the text file format has one line of separators, so we need to skip it
+                lines.next();
+
+                // Create columns with the corresponding data types and primary key information
                 let mut columns: Vec<Column> = column_names
                     .iter()
                     .zip(column_data_types.iter())
-                    .map(|(name, data_type)| Column::new(name, data_type.clone(), None))
+                    .zip(primary_key_info.iter())
+                    .map(|((name, data_type), is_primary_key)| {
+                        Column::new(name, data_type.clone(), None, *is_primary_key)
+                    })
                     .collect();
-
-                // the text file format has one line of seperators, so we need to skip it
-                lines.next();
 
                 // Read the data rows
                 for line in lines {
@@ -1336,7 +1443,7 @@ impl Table {
                 }
 
                 let table_name = file_name.to_string();
-                Ok(Table::new(&table_name, columns))
+                Table::new(&table_name, columns)
             }
             _ => Err(Error::InvalidFormat(format.to_string())),
         }

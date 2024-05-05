@@ -13,7 +13,14 @@ fn main() {
         Column::new("age", ColumnDataType::Integer, None, false),
     ];
 
-    let mut users_table = Table::new("users", columns);
+    let users_table = Table::new("users", columns);
+    let mut users_table = match users_table {
+        Ok(table) => table,
+        Err(err) => {
+            eprintln!("Error creating table: {}", err);
+            return;
+        }
+    };
     println!("Created a new table 'users':");
     users_table.describe();
     print!("\n\n");
