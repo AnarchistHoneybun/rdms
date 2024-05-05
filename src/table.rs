@@ -672,6 +672,58 @@ impl Table {
         Ok(())
     }
 
+    /// Filters the table rows based on the provided nested condition structure and projects the filtered rows with the specified columns.
+    ///
+    /// # Arguments
+    ///
+    /// * `column_names` - A vector of strings representing the names of the columns to project.
+    /// * `nested_condition` - A `NestedCondition` enum representing the nested condition structure.
+    ///
+    /// # Returns
+    ///
+    /// * `Ok(())` if the filtering and projection operation is successful.
+    /// * `Err(Error)` if an error occurs during the operation.
+    ///
+    /// # Errors
+    ///
+    /// This function can return the following errors:
+    ///
+    /// * `Error::NonExistingColumns` - If one or more of the provided column names do not exist in the table.
+    /// * `Error::NonExistingColumn` - If a column in the condition does not exist in the table.
+    /// * `Error::InvalidOperator` - If an invalid operator is used in the condition.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use crate::column::{Column, ColumnDataType};
+    /// use crate::table::{NestedCondition, Table};
+    ///
+    /// let mut table = Table::new(
+    ///     "users",
+    ///     vec![
+    ///         Column::new("user_id", ColumnDataType::Integer, None),
+    ///         Column::new("user_name", ColumnDataType::Text, None),
+    ///         Column::new("age", ColumnDataType::Integer, None),
+    ///         Column::new("score", ColumnDataType::Float, None),
+    ///     ],
+    /// );
+    ///
+    /// // Insert some initial data
+    /// table.insert(vec!["1".to_string(), "Alice".to_string(), "25".to_string(), "85.5".to_string()]).unwrap();
+    /// table.insert(vec!["2".to_string(), "Bob".to_string(), "30".to_string(), "92.0".to_string()]).unwrap();
+    /// table.insert(vec!["3".to_string(), "Charlie".to_string(), "35".to_string(), "75.0".to_string()]).unwrap();
+    ///
+    /// // Filter rows where age is greater than 25 and project only id and name columns
+    /// let nested_condition = NestedCondition::Condition(
+    ///     "age".to_string(),
+    ///     ">".to_string(),
+    ///     "25".to_string(),
+    /// );
+    /// table.filter_and_project(
+    ///     vec!["user_id".to_string(), "user_name".to_string()],
+    ///     nested_condition,
+    /// ).unwrap();
+    /// ```
     pub fn filter_and_project(
         &self,
         column_names: Vec<String>,

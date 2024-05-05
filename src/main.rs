@@ -159,7 +159,9 @@ fn main() {
         )),
     );
 
-    users_table.filter_with_nested_conditions(nested_condition).unwrap();
+    users_table
+        .filter_with_nested_conditions(nested_condition)
+        .unwrap();
 
     // 12. Filter and project table
     println!("Filtering and projecting table:");

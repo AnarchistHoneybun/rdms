@@ -580,10 +580,8 @@ mod tests {
         // Filter and project with a single condition
         let nested_condition =
             NestedCondition::Condition("age".to_string(), ">".to_string(), "25".to_string());
-        let result = table.filter_and_project(
-            vec!["id".to_string(), "name".to_string()],
-            nested_condition,
-        );
+        let result =
+            table.filter_and_project(vec!["id".to_string(), "name".to_string()], nested_condition);
         assert!(result.is_ok());
 
         // Filter and project with nested conditions (AND and OR)
@@ -615,28 +613,21 @@ mod tests {
         // Filter and project with non-existing columns
         let nested_condition =
             NestedCondition::Condition("age".to_string(), ">".to_string(), "25".to_string());
-        let result = table.filter_and_project(
-            vec!["invalid".to_string()],
-            nested_condition,
-        );
+        let result = table.filter_and_project(vec!["invalid".to_string()], nested_condition);
         assert!(matches!(result, Err(Error::NonExistingColumns(_))));
 
         // Filter and project with a non-existing column in the condition
         let nested_condition =
             NestedCondition::Condition("invalid".to_string(), "=".to_string(), "value".to_string());
-        let result = table.filter_and_project(
-            vec!["id".to_string(), "name".to_string()],
-            nested_condition,
-        );
+        let result =
+            table.filter_and_project(vec!["id".to_string(), "name".to_string()], nested_condition);
         assert!(matches!(result, Err(Error::NonExistingColumn(_))));
 
         // Filter and project with an invalid operator in the condition
         let nested_condition =
             NestedCondition::Condition("age".to_string(), "invalid".to_string(), "30".to_string());
-        let result = table.filter_and_project(
-            vec!["id".to_string(), "name".to_string()],
-            nested_condition,
-        );
+        let result =
+            table.filter_and_project(vec!["id".to_string(), "name".to_string()], nested_condition);
         assert!(matches!(result, Err(Error::InvalidOperator(_))));
     }
 }
