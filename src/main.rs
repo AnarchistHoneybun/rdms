@@ -8,9 +8,9 @@ mod tests;
 fn main() {
     // 1. Create a new table
     let columns = vec![
-        Column::new("user_id", ColumnDataType::Integer, None),
-        Column::new("user_name", ColumnDataType::Text, None),
-        Column::new("age", ColumnDataType::Integer, None),
+        Column::new("user_id", ColumnDataType::Integer, None, true),
+        Column::new("user_name", ColumnDataType::Text, None, false),
+        Column::new("age", ColumnDataType::Integer, None, false),
     ];
 
     let mut users_table = Table::new("users", columns);
@@ -77,14 +77,14 @@ fn main() {
     print!("\n\n");
 
     // 7. Count records
-    let total_records = users_table.count(None);
+    let total_records = users_table.column_count(None);
     if let Err(err) = total_records {
         println!("Error counting records: {}", err);
     } else {
         println!("Total records: {}", total_records.unwrap());
     }
 
-    let non_null_names = users_table.count(Some("user_name".to_string()));
+    let non_null_names = users_table.column_count(Some("user_name".to_string()));
     if let Err(err) = non_null_names {
         println!("Error counting records: {}", err);
     } else {

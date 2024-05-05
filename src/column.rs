@@ -71,11 +71,12 @@ pub struct Column {
     pub name: String,
     pub data_type: ColumnDataType,
     pub data: Vec<Value>,
+    pub is_primary_key: bool,
 }
 
 impl Column {
     /// Create a new column with the given name, datatype and default value.
-    pub fn new(name: &str, data_type: ColumnDataType, default_value: Option<Value>) -> Self {
+    pub fn new(name: &str, data_type: ColumnDataType, default_value: Option<Value>, is_primary_key: bool,) -> Self {
         Column {
             name: name.to_owned(),
             data_type,
@@ -83,6 +84,7 @@ impl Column {
                 Some(value) => vec![value],
                 None => Vec::new(),
             },
+            is_primary_key,
         }
     }
 }

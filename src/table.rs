@@ -49,6 +49,9 @@ pub enum Error {
     InvalidOperator(String),   // operator_str
     FileError(String),
     InvalidFormat(String),
+    MultiplePrimaryKeys,
+    DuplicatePrimaryKey,
+    NullPrimaryKey,
 }
 
 /// Implement Display trait for Error enum to allow for custom error messages.
@@ -72,6 +75,9 @@ impl fmt::Display for Error {
             Error::InvalidOperator(operator_str) => write!(f, "Invalid operator: {}", operator_str),
             Error::FileError(msg) => write!(f, "File error: {}", msg),
             Error::InvalidFormat(format) => write!(f, "Invalid format: {}", format),
+            Error::MultiplePrimaryKeys => write!(f, "Multiple primary keys are not allowed"),
+            Error::DuplicatePrimaryKey => write!(f, "Duplicate primary key value"),
+            Error::NullPrimaryKey => write!(f, "Primary key value cannot be null"),
         }
     }
 }
@@ -84,6 +90,7 @@ impl std::error::Error for Error {}
 pub struct Table {
     pub(crate) name: String,
     pub(crate) columns: Vec<Column>,
+    pub(crate) primary_key_column: Option<Column>,
 }
 
 impl Table {
@@ -112,11 +119,24 @@ impl Table {
     ///
     /// let table = Table::new("users", columns);
     /// ```
-    pub fn new(table_name: &str, columns: Vec<Column>) -> Table {
-        Table {
+    pub fn new(table_name: &str, mut columns: Vec<Column>) -> Result<Table, Error> {
+        let mut primary_key_column: Option<Column> = None;
+
+        // Validate that only one column is marked as the primary key
+        for column in &columns {
+            if column.is_primary_key {
+                if primary_key_column.is_some() {
+                    return Err(Error::MultiplePrimaryKeys);
+                }
+                primary_key_column = Some(column.clone());
+            }
+        }
+
+        Ok(Table {
             name: table_name.to_string(),
             columns,
-        }
+            primary_key_column,
+        })
     }
 
     /// Creates a copy of the current `Table` instance.
@@ -144,16 +164,28 @@ impl Table {
     /// ```
     pub fn copy(&self) -> Table {
         let mut new_columns = Vec::with_capacity(self.columns.len());
+        let mut new_primary_key_column: Option<Column> = None;
 
         for column in &self.columns {
-            let mut new_column = Column::new(&*column.name.clone(), column.data_type.clone(), None);
+            let mut new_column = Column::new(
+                &*column.name.clone(),
+                column.data_type.clone(),
+                None,
+                column.is_primary_key,
+            );
             new_column.data = column.data.clone();
+
+            if column.is_primary_key {
+                new_primary_key_column = Some(new_column.clone());
+            }
+
             new_columns.push(new_column);
         }
 
         Table {
             name: self.name.clone(),
             columns: new_columns,
+            primary_key_column: new_primary_key_column,
         }
     }
 
@@ -210,6 +242,29 @@ impl Table {
                         Err(_) => return Err(Error::ParseError(parsed_values.len(), value_str)),
                     },
                     ColumnDataType::Text => parsed_values.push(Value::Text(value_str)),
+                }
+            }
+        }
+
+        // Check if the primary key column exists and validate the primary key value
+        if let Some(primary_key_column) = &self.primary_key_column {
+            let primary_key_idx = self
+                .columns
+                .iter()
+                .position(|c| c.name == primary_key_column.name)
+                .unwrap();
+            let primary_key_value = &parsed_values[primary_key_idx];
+
+            if primary_key_value == &Value::Null {
+                return Err(Error::NullPrimaryKey);
+            }
+
+            // Check for duplicate primary key values
+            for column in &self.columns {
+                if column.name == primary_key_column.name {
+                    if column.data.contains(primary_key_value) {
+                        return Err(Error::DuplicatePrimaryKey);
+                    }
                 }
             }
         }
@@ -872,7 +927,7 @@ impl Table {
     /// let age_count = table.count(Some("age".to_string())).unwrap();
     /// assert_eq!(age_count, 2);
     /// ```
-    pub fn count(&self, column_name: Option<String>) -> Result<usize, Error> {
+    pub fn column_count(&self, column_name: Option<String>) -> Result<usize, Error> {
         return if let Some(column_name) = column_name {
             // Check if the provided column name exists
             if let Some(column) = self.columns.iter().find(|c| c.name == column_name) {
