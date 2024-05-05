@@ -672,6 +672,61 @@ impl Table {
         Ok(())
     }
 
+    pub fn filter_and_project(
+        &self,
+        column_names: Vec<String>,
+        nested_condition: NestedCondition,
+    ) -> Result<(), Error> {
+        // Create a new table with the same columns and data types
+        let mut filtered_table = self.copy();
+
+        // Filter the rows based on the nested condition
+        let columns_clone = self.columns.clone();
+        let mut row_indices_to_remove = Vec::new();
+
+        for (row_idx, _) in self.columns[0].data.iter().enumerate() {
+            let satisfies_condition =
+                evaluate_nested_conditions(&nested_condition, &columns_clone, row_idx)?;
+
+            if !satisfies_condition {
+                row_indices_to_remove.push(row_idx);
+            }
+        }
+
+        for column in &mut filtered_table.columns {
+            column.data = column
+                .data
+                .iter()
+                .enumerate()
+                .filter_map(|(idx, value)| {
+                    if !row_indices_to_remove.contains(&idx) {
+                        Some(value.clone())
+                    } else {
+                        None
+                    }
+                })
+                .collect();
+        }
+
+        // Check if all provided column names exist in the table
+        let column_names_set: HashSet<String> = column_names.iter().cloned().collect();
+        let existing_columns: HashSet<String> =
+            self.columns.iter().map(|c| c.name.clone()).collect();
+        let non_existing_columns: Vec<String> = column_names_set
+            .difference(&existing_columns)
+            .cloned()
+            .collect();
+
+        if !non_existing_columns.is_empty() {
+            return Err(Error::NonExistingColumns(non_existing_columns));
+        }
+
+        // Project the filtered table with the provided column names
+        filtered_table.project(column_names)?;
+
+        Ok(())
+    }
+
     /// Prints the structure of the table, including the column names and their corresponding data types.
     ///
     /// # Examples
