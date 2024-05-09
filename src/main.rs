@@ -101,7 +101,7 @@ fn main() {
 
     // 8. Export table to CSV
     println!("Exporting table to CSV file 'users.csv':");
-    users_table.export_table("users.csv", "csv").unwrap();
+    users_table.export_table("users.txt", "txt").unwrap();
     print!("\n\n");
 
     // 9. Copy table
