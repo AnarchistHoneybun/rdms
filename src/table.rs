@@ -513,6 +513,10 @@ impl Table {
         update_input: (String, String),
         nested_condition: NestedCondition,
     ) -> Result<(), Error> {
+
+        // Make a copy of the table so we can restore if needed
+        let table_copy = self.copy();
+
         // Validate column name in update_input
         let update_column = self
             .columns
@@ -562,8 +566,29 @@ impl Table {
                         Ok(acc)
                     },
                 )?;
+
+                // If the updated column is the primary key column, check for duplicates
+                if record.is_primary_key {
+                    let mut duplicate_found = false;
+                    for v in &record.data {
+                        if record.data.iter().filter(|&x| *x == *v).count() > 1 {
+                            duplicate_found = true;
+                            break;
+                        }
+                    }
+
+                    if duplicate_found {
+                        self.columns = table_copy.columns;
+                        return Err(Error::DuplicatePrimaryKey);
+                    }
+                }
             }
         }
+
+        // task: check if the primary key column has any duplicate values
+        // if so, reset the table values and error out
+
+
 
         Ok(())
     }
