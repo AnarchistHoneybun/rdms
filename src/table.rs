@@ -513,7 +513,6 @@ impl Table {
         update_input: (String, String),
         nested_condition: NestedCondition,
     ) -> Result<(), Error> {
-
         // Make a copy of the table so we can restore if needed
         let table_copy = self.copy();
 
@@ -584,11 +583,6 @@ impl Table {
                 }
             }
         }
-
-        // task: check if the primary key column has any duplicate values
-        // if so, reset the table values and error out
-
-
 
         Ok(())
     }

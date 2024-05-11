@@ -154,16 +154,12 @@ fn main() {
 
     // 11.2. Update table with nested conditions, but for primary key column
 
-    let nested_condition = NestedCondition::Condition(
-        "age".to_string(),
-        "=".to_string(),
-        "30".to_string(),
-    );
+    let nested_condition =
+        NestedCondition::Condition("age".to_string(), "=".to_string(), "30".to_string());
 
-    if let Err(err) = users_table.update_with_nested_conditions(
-        ("user_id".to_string(), "5".to_string()),
-        nested_condition,
-    ) {
+    if let Err(err) = users_table
+        .update_with_nested_conditions(("user_id".to_string(), "5".to_string()), nested_condition)
+    {
         println!("Error updating data: {}", err);
     }
 

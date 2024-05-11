@@ -12,7 +12,8 @@ mod tests {
                 Column::new("name", ColumnDataType::Text, None, false),
                 Column::new("score", ColumnDataType::Float, None, false),
             ],
-        ).unwrap();
+        )
+        .unwrap();
 
         // Test inserting a valid record
         let result = table.insert(vec![
@@ -44,7 +45,8 @@ mod tests {
                 Column::new("name", ColumnDataType::Text, None, false),
                 Column::new("score", ColumnDataType::Float, None, false),
             ],
-        ).unwrap();
+        )
+        .unwrap();
 
         // Insert some initial data
         table
@@ -87,7 +89,8 @@ mod tests {
                 Column::new("user_name", ColumnDataType::Text, None, false),
                 Column::new("age", ColumnDataType::Integer, None, false),
             ],
-        ).unwrap();
+        )
+        .unwrap();
 
         // Insert some initial data
         table
@@ -173,7 +176,8 @@ mod tests {
                 Column::new("name", ColumnDataType::Text, None, false),
                 Column::new("score", ColumnDataType::Float, None, false),
             ],
-        ).unwrap();
+        )
+        .unwrap();
 
         // Test inserting a valid record
         let result = table.insert_with_columns(
@@ -216,7 +220,8 @@ mod tests {
                 Column::new("name", ColumnDataType::Text, None, false),
                 Column::new("score", ColumnDataType::Float, None, false),
             ],
-        ).unwrap();
+        )
+        .unwrap();
 
         // Insert some initial data
         table
@@ -259,7 +264,8 @@ mod tests {
                 Column::new("name", ColumnDataType::Text, None, false),
                 Column::new("score", ColumnDataType::Float, None, false),
             ],
-        ).unwrap();
+        )
+        .unwrap();
 
         // Insert some initial data
         table
@@ -309,7 +315,8 @@ mod tests {
                 Column::new("name", ColumnDataType::Text, None, false),
                 Column::new("score", ColumnDataType::Float, None, false),
             ],
-        ).unwrap();
+        )
+        .unwrap();
 
         // Insert some initial data
         original_table
@@ -453,7 +460,8 @@ mod tests {
                 Column::new("age", ColumnDataType::Integer, None, false),
                 Column::new("score", ColumnDataType::Float, None, false),
             ],
-        ).unwrap();
+        )
+        .unwrap();
 
         // Insert some initial data
         table
@@ -541,7 +549,8 @@ mod tests {
                 Column::new("age", ColumnDataType::Integer, None, false),
                 Column::new("score", ColumnDataType::Float, None, false),
             ],
-        ).unwrap();
+        )
+        .unwrap();
 
         // Insert some initial data
         table
