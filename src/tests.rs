@@ -8,11 +8,12 @@ mod tests {
         let mut table = Table::new(
             "test_table",
             vec![
-                Column::new("id", ColumnDataType::Integer, None),
-                Column::new("name", ColumnDataType::Text, None),
-                Column::new("score", ColumnDataType::Float, None),
+                Column::new("id", ColumnDataType::Integer, None, true),
+                Column::new("name", ColumnDataType::Text, None, false),
+                Column::new("score", ColumnDataType::Float, None, false),
             ],
-        );
+        )
+        .unwrap();
 
         // Test inserting a valid record
         let result = table.insert(vec![
@@ -40,11 +41,12 @@ mod tests {
         let mut table = Table::new(
             "test_table",
             vec![
-                Column::new("id", ColumnDataType::Integer, None),
-                Column::new("name", ColumnDataType::Text, None),
-                Column::new("score", ColumnDataType::Float, None),
+                Column::new("id", ColumnDataType::Integer, None, true),
+                Column::new("name", ColumnDataType::Text, None, false),
+                Column::new("score", ColumnDataType::Float, None, false),
             ],
-        );
+        )
+        .unwrap();
 
         // Insert some initial data
         table
@@ -83,11 +85,12 @@ mod tests {
         let mut table = Table::new(
             "test_table",
             vec![
-                Column::new("user_id", ColumnDataType::Integer, None),
-                Column::new("user_name", ColumnDataType::Text, None),
-                Column::new("age", ColumnDataType::Integer, None),
+                Column::new("user_id", ColumnDataType::Integer, None, true),
+                Column::new("user_name", ColumnDataType::Text, None, false),
+                Column::new("age", ColumnDataType::Integer, None, false),
             ],
-        );
+        )
+        .unwrap();
 
         // Insert some initial data
         table
@@ -169,11 +172,12 @@ mod tests {
         let mut table = Table::new(
             "test_table",
             vec![
-                Column::new("id", ColumnDataType::Integer, None),
-                Column::new("name", ColumnDataType::Text, None),
-                Column::new("score", ColumnDataType::Float, None),
+                Column::new("id", ColumnDataType::Integer, None, true),
+                Column::new("name", ColumnDataType::Text, None, false),
+                Column::new("score", ColumnDataType::Float, None, false),
             ],
-        );
+        )
+        .unwrap();
 
         // Test inserting a valid record
         let result = table.insert_with_columns(
@@ -212,11 +216,12 @@ mod tests {
         let mut table = Table::new(
             "test_table",
             vec![
-                Column::new("id", ColumnDataType::Integer, None),
-                Column::new("name", ColumnDataType::Text, None),
-                Column::new("score", ColumnDataType::Float, None),
+                Column::new("id", ColumnDataType::Integer, None, true),
+                Column::new("name", ColumnDataType::Text, None, false),
+                Column::new("score", ColumnDataType::Float, None, false),
             ],
-        );
+        )
+        .unwrap();
 
         // Insert some initial data
         table
@@ -255,11 +260,12 @@ mod tests {
         let mut table = Table::new(
             "test_table",
             vec![
-                Column::new("id", ColumnDataType::Integer, None),
-                Column::new("name", ColumnDataType::Text, None),
-                Column::new("score", ColumnDataType::Float, None),
+                Column::new("id", ColumnDataType::Integer, None, true),
+                Column::new("name", ColumnDataType::Text, None, false),
+                Column::new("score", ColumnDataType::Float, None, false),
             ],
-        );
+        )
+        .unwrap();
 
         // Insert some initial data
         table
@@ -288,15 +294,15 @@ mod tests {
             .unwrap(); // Insert a record with null values
 
         // Test counting total records
-        let total_records = table.count(None).unwrap();
+        let total_records = table.column_count(None).unwrap();
         assert_eq!(total_records, 4);
 
         // Test counting non-null values in a column
-        let non_null_scores = table.count(Some("score".to_string())).unwrap();
+        let non_null_scores = table.column_count(Some("score".to_string())).unwrap();
         assert_eq!(non_null_scores, 3);
 
         // Test counting for a non-existing column
-        let result = table.count(Some("invalid".to_string()));
+        let result = table.column_count(Some("invalid".to_string()));
         assert!(matches!(result, Err(Error::NonExistingColumn(_))));
     }
 
@@ -305,11 +311,12 @@ mod tests {
         let mut original_table = Table::new(
             "test_table",
             vec![
-                Column::new("id", ColumnDataType::Integer, None),
-                Column::new("name", ColumnDataType::Text, None),
-                Column::new("score", ColumnDataType::Float, None),
+                Column::new("id", ColumnDataType::Integer, None, true),
+                Column::new("name", ColumnDataType::Text, None, false),
+                Column::new("score", ColumnDataType::Float, None, false),
             ],
-        );
+        )
+        .unwrap();
 
         // Insert some initial data
         original_table
@@ -448,12 +455,13 @@ mod tests {
         let mut table = Table::new(
             "test_table",
             vec![
-                Column::new("id", ColumnDataType::Integer, None),
-                Column::new("name", ColumnDataType::Text, None),
-                Column::new("age", ColumnDataType::Integer, None),
-                Column::new("score", ColumnDataType::Float, None),
+                Column::new("id", ColumnDataType::Integer, None, false),
+                Column::new("name", ColumnDataType::Text, None, false),
+                Column::new("age", ColumnDataType::Integer, None, false),
+                Column::new("score", ColumnDataType::Float, None, false),
             ],
-        );
+        )
+        .unwrap();
 
         // Insert some initial data
         table
@@ -536,12 +544,13 @@ mod tests {
         let mut table = Table::new(
             "test_table",
             vec![
-                Column::new("id", ColumnDataType::Integer, None),
-                Column::new("name", ColumnDataType::Text, None),
-                Column::new("age", ColumnDataType::Integer, None),
-                Column::new("score", ColumnDataType::Float, None),
+                Column::new("id", ColumnDataType::Integer, None, true),
+                Column::new("name", ColumnDataType::Text, None, false),
+                Column::new("age", ColumnDataType::Integer, None, false),
+                Column::new("score", ColumnDataType::Float, None, false),
             ],
-        );
+        )
+        .unwrap();
 
         // Insert some initial data
         table

@@ -101,7 +101,7 @@ fn main() {
 
     // 8. Export table to CSV
     println!("Exporting table to CSV file 'users.csv':");
-    users_table.export_table("users.csv", "csv").unwrap();
+    users_table.export_table("users.txt", "txt").unwrap();
     print!("\n\n");
 
     // 9. Copy table
@@ -122,7 +122,7 @@ fn main() {
     }
     print!("\n\n");
 
-    // 11. Update table with nested conditions
+    // 11.1. Update table with nested conditions
     println!("Updating table with nested conditions:");
     let nested_condition = NestedCondition::And(
         Box::new(NestedCondition::Condition(
@@ -152,7 +152,18 @@ fn main() {
     }
     users_table.show();
 
-    // Example usage
+    // 11.2. Update table with nested conditions, but for primary key column
+
+    let nested_condition =
+        NestedCondition::Condition("age".to_string(), "=".to_string(), "30".to_string());
+
+    if let Err(err) = users_table
+        .update_with_nested_conditions(("user_id".to_string(), "5".to_string()), nested_condition)
+    {
+        println!("Error updating data: {}", err);
+    }
+
+    // 12. Filter table with nested conditions
     let nested_condition = NestedCondition::And(
         Box::new(NestedCondition::Condition(
             "age".to_string(),
@@ -170,7 +181,7 @@ fn main() {
         .filter_with_nested_conditions(nested_condition)
         .unwrap();
 
-    // 12. Filter and project table
+    // 13. Filter and project table
     println!("Filtering and projecting table:");
     let column_names = vec!["user_id".to_string()];
     let nested_condition = NestedCondition::And(
