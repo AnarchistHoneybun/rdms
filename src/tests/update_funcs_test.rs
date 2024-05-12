@@ -11,7 +11,7 @@ fn test_update_column() {
             Column::new("score", ColumnDataType::Float, None, false),
         ],
     )
-        .unwrap();
+    .unwrap();
 
     // Insert some initial data
     table
@@ -55,7 +55,7 @@ fn test_update_with_nested_conditions() {
             Column::new("age", ColumnDataType::Integer, None, false),
         ],
     )
-        .unwrap();
+    .unwrap();
 
     // Insert some initial data
     table

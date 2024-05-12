@@ -11,7 +11,7 @@ fn test_project() {
             Column::new("score", ColumnDataType::Float, None, false),
         ],
     )
-        .unwrap();
+    .unwrap();
 
     // Insert some initial data
     table
@@ -55,7 +55,7 @@ fn test_column_count() {
             Column::new("score", ColumnDataType::Float, None, false),
         ],
     )
-        .unwrap();
+    .unwrap();
 
     // Insert some initial data
     table
@@ -106,7 +106,7 @@ fn test_copy() {
             Column::new("score", ColumnDataType::Float, None, false),
         ],
     )
-        .unwrap();
+    .unwrap();
 
     // Insert some initial data
     original_table

@@ -1,11 +1,11 @@
+mod errors;
 mod export_import;
 mod filter_funcs;
 mod helpers;
 mod insert_funcs;
+mod operators;
 mod table_utils;
 mod update_funcs;
-mod errors;
-mod operators;
 
 use crate::column::Column;
 use crate::table::errors::Error;

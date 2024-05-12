@@ -11,7 +11,7 @@ fn test_insert() {
             Column::new("score", ColumnDataType::Float, None, false),
         ],
     )
-        .unwrap();
+    .unwrap();
 
     // Test inserting a valid record
     let result = table.insert(vec![
@@ -44,7 +44,7 @@ fn test_insert_with_columns() {
             Column::new("score", ColumnDataType::Float, None, false),
         ],
     )
-        .unwrap();
+    .unwrap();
 
     // Test inserting a valid record
     let result = table.insert_with_columns(

@@ -12,7 +12,7 @@ fn test_filter_with_nested_conditions() {
             Column::new("score", ColumnDataType::Float, None, false),
         ],
     )
-        .unwrap();
+    .unwrap();
 
     // Insert some initial data
     table
@@ -101,7 +101,7 @@ fn test_filter_and_project() {
             Column::new("score", ColumnDataType::Float, None, false),
         ],
     )
-        .unwrap();
+    .unwrap();
 
     // Insert some initial data
     table
