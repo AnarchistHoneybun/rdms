@@ -150,22 +150,55 @@ impl Table {
             return Err(Error::MismatchedColumnCount);
         }
 
+        // Check if the provided columns contain the primary key column
+        if let Some(primary_key_column) = &self.primary_key_column {
+            if !column_names.contains(&primary_key_column.name) {
+                return Err(Error::PrimaryKeyNotProvided(primary_key_column.name.clone()));
+            }
+        }
+
         let mut parsed_values: Vec<Value> = vec![Value::Null; self.columns.len()];
 
         for (column_name, value_str) in column_names.iter().zip(data.into_iter()) {
             if let Some(column_idx) = self.columns.iter().position(|c| c.name == *column_name) {
                 let column = &self.columns[column_idx];
-                match column.data_type {
-                    ColumnDataType::Integer => match value_str.parse::<i64>() {
-                        Ok(value) => parsed_values[column_idx] = Value::Integer(value),
-                        Err(_) => return Err(Error::ParseError(column_idx, value_str)),
-                    },
-                    ColumnDataType::Float => match value_str.parse::<f64>() {
-                        Ok(value) => parsed_values[column_idx] = Value::Float(value),
-                        Err(_) => return Err(Error::ParseError(column_idx, value_str)),
-                    },
-                    ColumnDataType::Text => parsed_values[column_idx] = Value::Text(value_str),
+                if value_str.trim().to_lowercase() == "null" {
+                    parsed_values[column_idx] = Value::Null;
+                } else {
+                    match column.data_type {
+                        ColumnDataType::Integer => match value_str.parse::<i64>() {
+                            Ok(value) => parsed_values[column_idx] = Value::Integer(value),
+                            Err(_) => return Err(Error::ParseError(column_idx, value_str)),
+                        },
+                        ColumnDataType::Float => match value_str.parse::<f64>() {
+                            Ok(value) => parsed_values[column_idx] = Value::Float(value),
+                            Err(_) => return Err(Error::ParseError(column_idx, value_str)),
+                        },
+                        ColumnDataType::Text => parsed_values[column_idx] = Value::Text(value_str),
+                    }
                 }
+            }
+        }
+
+        // Check if the primary key value for the new record already exists
+        if let Some(primary_key_column) = &self.primary_key_column {
+            let primary_key_idx = self
+                .columns
+                .iter()
+                .position(|c| c.name == primary_key_column.name)
+                .unwrap();
+            let primary_key_value = &parsed_values[primary_key_idx];
+
+            if primary_key_value != &Value::Null {
+                for column in &self.columns {
+                    if column.name == primary_key_column.name {
+                        if column.data.contains(primary_key_value) {
+                            return Err(Error::DuplicatePrimaryKey);
+                        }
+                    }
+                }
+            } else {
+                return Err(Error::NullPrimaryKey);
             }
         }
 

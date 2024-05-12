@@ -57,6 +57,7 @@ pub enum Error {
     DuplicatePrimaryKey,
     NullPrimaryKey,
     CannotBatchUpdatePrimaryKey,
+    PrimaryKeyNotProvided(String), // column_name
 }
 
 /// Implement Display trait for Error enum to allow for custom error messages.
@@ -85,7 +86,10 @@ impl fmt::Display for Error {
             Error::NullPrimaryKey => write!(f, "Primary key value cannot be null"),
             Error::CannotBatchUpdatePrimaryKey => {
                 write!(f, "Primary key column disallows batch updates")
-            }
+            },
+            Error::PrimaryKeyNotProvided(column_name) => {
+                write!(f, "Primary key column '{}' not provided", column_name)
+            },
         }
     }
 }
