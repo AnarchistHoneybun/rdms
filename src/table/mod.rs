@@ -4,9 +4,11 @@ mod helpers;
 mod insert_funcs;
 mod table_utils;
 mod update_funcs;
+mod errors;
+mod operators;
 
 use crate::column::Column;
-use std::fmt;
+use crate::table::errors::Error;
 
 #[derive(Debug)]
 pub enum NestedCondition {
@@ -14,87 +16,6 @@ pub enum NestedCondition {
     And(Box<NestedCondition>, Box<NestedCondition>),
     Or(Box<NestedCondition>, Box<NestedCondition>),
 }
-
-/// This Operator enum represents the different comparison operators that can be used in an update
-/// or select condition. These are mapped to respective operations on execution.
-#[derive(Debug, PartialEq)]
-enum Operator {
-    Equal,
-    NotEqual,
-    LessThan,
-    GreaterThan,
-    LessThanOrEqual,
-    GreaterThanOrEqual,
-}
-
-impl Operator {
-    /// This function converts a string to an Operator enum. It returns an error if the requested string
-    /// is not a supported operator.
-    fn from_str(s: &str) -> Result<Operator, String> {
-        match s {
-            "=" => Ok(Operator::Equal),
-            "!=" => Ok(Operator::NotEqual),
-            "<" => Ok(Operator::LessThan),
-            ">" => Ok(Operator::GreaterThan),
-            "<=" => Ok(Operator::LessThanOrEqual),
-            ">=" => Ok(Operator::GreaterThanOrEqual),
-            _ => Err(format!("Invalid operator: {}", s)),
-        }
-    }
-}
-
-/// Enum for various error types that can occur during table operations.
-#[derive(Debug)]
-pub enum Error {
-    MismatchedColumnCount,
-    ParseError(usize, String),
-    NonExistingColumns(Vec<String>),
-    NonExistingColumn(String), // column_name
-    InvalidOperator(String),   // operator_str
-    FileError(String),
-    InvalidFormat(String),
-    MultiplePrimaryKeys,
-    DuplicatePrimaryKey,
-    NullPrimaryKey,
-    CannotBatchUpdatePrimaryKey,
-    PrimaryKeyNotProvided(String), // column_name
-}
-
-/// Implement Display trait for Error enum to allow for custom error messages.
-impl fmt::Display for Error {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        match self {
-            Error::MismatchedColumnCount => {
-                write!(f, "Number of values doesn't match the number of columns")
-            }
-            Error::ParseError(index, value) => {
-                write!(f, "Failed to parse value '{}' at index {}", value, index)
-            }
-            Error::NonExistingColumns(columns) => write!(
-                f,
-                "The following columns do not exist: {}",
-                columns.join(", ")
-            ),
-            Error::NonExistingColumn(column_name) => {
-                write!(f, "The column '{}' does not exist", column_name)
-            }
-            Error::InvalidOperator(operator_str) => write!(f, "Invalid operator: {}", operator_str),
-            Error::FileError(msg) => write!(f, "File error: {}", msg),
-            Error::InvalidFormat(format) => write!(f, "Invalid format: {}", format),
-            Error::MultiplePrimaryKeys => write!(f, "Multiple primary keys are not allowed"),
-            Error::DuplicatePrimaryKey => write!(f, "Duplicate primary key value"),
-            Error::NullPrimaryKey => write!(f, "Primary key value cannot be null"),
-            Error::CannotBatchUpdatePrimaryKey => {
-                write!(f, "Primary key column disallows batch updates")
-            }
-            Error::PrimaryKeyNotProvided(column_name) => {
-                write!(f, "Primary key column '{}' not provided", column_name)
-            }
-        }
-    }
-}
-
-impl std::error::Error for Error {}
 
 /// Struct representing a table with a name and a vector of columns
 /// (data is stored inside the column struct).

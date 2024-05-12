@@ -1,5 +1,5 @@
 use crate::column::{Column, ColumnDataType, Value};
-use crate::table::{Error, NestedCondition, Operator};
+use crate::table::{Error, NestedCondition, operators::Operator};
 
 /// Evaluates a nested condition structure against a specific row in the table.
 ///
