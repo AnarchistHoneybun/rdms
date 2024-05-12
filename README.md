@@ -14,6 +14,9 @@ it's not feasible to update them for every change.
 
 
 ## The State of Things
+
+> Massive refactoring going on things might break constantly. Stay tuned
+
 Currently, what we have is:
 - A table with relevant structs and enums and so on.
 - Three supported data types: `Int`, `String`, `Float`.
