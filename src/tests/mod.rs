@@ -372,10 +372,10 @@ mod tests {
     #[test]
     fn test_import_table() {
         // Test importing a CSV file
-        let result = Table::import_table("tests/data/test_data.csv", "csv");
+        let result = Table::import_table("test_files/data/test_data.csv", "csv");
         match result {
             Ok(table) => {
-                assert_eq!(table.name, "tests/data/test_data.csv");
+                assert_eq!(table.name, "test_files/data/test_data.csv");
                 assert_eq!(table.columns.len(), 3);
 
                 assert_eq!(table.columns[0].name, "id");
@@ -407,10 +407,10 @@ mod tests {
         }
 
         // Test importing a TXT file
-        let result = Table::import_table("tests/data/test_data.txt", "txt");
+        let result = Table::import_table("test_files/data/test_data.txt", "txt");
         match result {
             Ok(table) => {
-                assert_eq!(table.name, "tests/data/test_data.txt");
+                assert_eq!(table.name, "test_files/data/test_data.txt");
                 assert_eq!(table.columns.len(), 3);
 
                 assert_eq!(table.columns[0].name, "id");
@@ -442,11 +442,11 @@ mod tests {
         }
 
         // Test importing a non-existing file
-        let result = Table::import_table("tests/data/non_existing.csv", "csv");
+        let result = Table::import_table("test_files/data/non_existing.csv", "csv");
         assert!(matches!(result, Err(Error::FileError(_))));
 
         // Test importing a file with invalid format
-        let result = Table::import_table("tests/data/test_data.txt", "pdf");
+        let result = Table::import_table("test_files/data/test_data.txt", "pdf");
         assert!(matches!(result, Err(Error::InvalidFormat(_))));
     }
 
