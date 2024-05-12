@@ -1,6 +1,6 @@
-use std::collections::HashSet;
 use crate::column::{ColumnDataType, Value};
 use crate::table::{Error, Table};
+use std::collections::HashSet;
 
 impl Table {
     /// Inserts a new record into the table.
@@ -153,7 +153,9 @@ impl Table {
         // Check if the provided columns contain the primary key column
         if let Some(primary_key_column) = &self.primary_key_column {
             if !column_names.contains(&primary_key_column.name) {
-                return Err(Error::PrimaryKeyNotProvided(primary_key_column.name.clone()));
+                return Err(Error::PrimaryKeyNotProvided(
+                    primary_key_column.name.clone(),
+                ));
             }
         }
 

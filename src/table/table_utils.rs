@@ -1,6 +1,6 @@
-use std::collections::HashSet;
 use crate::column::{Column, Value};
 use crate::table::{Error, Table};
+use std::collections::HashSet;
 
 impl Table {
     /// Creates a copy of the current `Table` instance.

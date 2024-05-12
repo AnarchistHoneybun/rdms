@@ -1,6 +1,6 @@
 use crate::column::{ColumnDataType, Value};
-use crate::table::{Error, NestedCondition, Table};
 use crate::table::helpers::evaluate_nested_conditions;
+use crate::table::{Error, NestedCondition, Table};
 
 impl Table {
     /// Updates the values of a specified column with a new value.

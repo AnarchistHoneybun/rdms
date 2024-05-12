@@ -1,12 +1,12 @@
 mod export_import;
-mod helpers;
 mod filter_funcs;
+mod helpers;
 mod insert_funcs;
-mod update_funcs;
 mod table_utils;
+mod update_funcs;
 
-use crate::column::{Column};
-use std::{fmt};
+use crate::column::Column;
+use std::fmt;
 
 #[derive(Debug)]
 pub enum NestedCondition {
@@ -86,10 +86,10 @@ impl fmt::Display for Error {
             Error::NullPrimaryKey => write!(f, "Primary key value cannot be null"),
             Error::CannotBatchUpdatePrimaryKey => {
                 write!(f, "Primary key column disallows batch updates")
-            },
+            }
             Error::PrimaryKeyNotProvided(column_name) => {
                 write!(f, "Primary key column '{}' not provided", column_name)
-            },
+            }
         }
     }
 }
@@ -150,5 +150,4 @@ impl Table {
             primary_key_column,
         })
     }
-
 }
