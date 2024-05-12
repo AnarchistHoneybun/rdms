@@ -76,7 +76,7 @@ mod tests {
         assert!(matches!(result, Err(Error::NonExistingColumn(_))));
 
         // Test updating with an invalid value for the column data type
-        let result = table.update_column("id", "invalid");
+        let result = table.update_column("score", "invalid");
         assert!(matches!(result, Err(Error::ParseError(0, _))));
     }
 
