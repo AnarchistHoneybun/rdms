@@ -11,7 +11,7 @@ fn test_update_column() {
             Column::new("score", ColumnDataType::Float, None, false),
         ],
     )
-        .unwrap();
+    .unwrap();
 
     // Insert some initial data
     table
@@ -59,7 +59,7 @@ fn test_update_with_nested_conditions() {
             Column::new("age", ColumnDataType::Integer, None, false),
         ],
     )
-        .unwrap();
+    .unwrap();
 
     // Insert some initial data
     table
@@ -147,18 +147,14 @@ fn test_update_with_nested_conditions() {
     // Test updating with an invalid value for the column data type
     let nested_condition =
         NestedCondition::Condition("user_id".to_string(), "=".to_string(), "3".to_string());
-    let result = table.update_with_nested_conditions(
-        ("age".to_string(), "Sam".to_string()),
-        nested_condition,
-    );
+    let result = table
+        .update_with_nested_conditions(("age".to_string(), "Sam".to_string()), nested_condition);
     assert!(matches!(result, Err(Error::ParseError(1, _))));
 
     // Test updating the primary key column with duplicate values
     let nested_condition =
         NestedCondition::Condition("age".to_string(), "=".to_string(), "30".to_string());
-    let result = table.update_with_nested_conditions(
-        ("user_id".to_string(), "1".to_string()),
-        nested_condition,
-    );
+    let result = table
+        .update_with_nested_conditions(("user_id".to_string(), "1".to_string()), nested_condition);
     assert!(matches!(result, Err(Error::DuplicatePrimaryKey)));
 }

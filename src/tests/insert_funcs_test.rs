@@ -11,7 +11,7 @@ fn test_insert() {
             Column::new("score", ColumnDataType::Float, None, false),
         ],
     )
-        .unwrap();
+    .unwrap();
 
     // Test inserting a valid record
     let result = table.insert(vec![
@@ -43,11 +43,7 @@ fn test_insert() {
 
     // Test inserting a record with duplicate primary key
     table
-        .insert(vec![
-            "5".to_string(),
-            "Eve".to_string(),
-            "92.0".to_string(),
-        ])
+        .insert(vec!["5".to_string(), "Eve".to_string(), "92.0".to_string()])
         .unwrap();
     let result = table.insert(vec![
         "5".to_string(),
@@ -67,7 +63,7 @@ fn test_insert_with_columns() {
             Column::new("score", ColumnDataType::Float, None, false),
         ],
     )
-        .unwrap();
+    .unwrap();
 
     // Test inserting a valid record
     let result = table.insert_with_columns(
@@ -110,7 +106,11 @@ fn test_insert_with_columns() {
     // Test inserting a record with null primary key
     let result = table.insert_with_columns(
         vec!["id".to_string(), "name".to_string(), "score".to_string()],
-        vec!["null".to_string(), "Charlie".to_string(), "75.0".to_string()],
+        vec![
+            "null".to_string(),
+            "Charlie".to_string(),
+            "75.0".to_string(),
+        ],
     );
     assert!(matches!(result, Err(Error::NullPrimaryKey)));
 
