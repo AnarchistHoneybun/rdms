@@ -10,9 +10,9 @@ mod tests;
 fn main() {
     // 1. Create a new table
     let columns = vec![
-        Column::new("user_id", ColumnDataType::Integer, None, true),
-        Column::new("user_name", ColumnDataType::Text, None, false),
-        Column::new("age", ColumnDataType::Integer, None, false),
+        Column::new("user_id", ColumnDataType::Integer, None, true, None),
+        Column::new("user_name", ColumnDataType::Text, None, false, None),
+        Column::new("age", ColumnDataType::Integer, None, false, None),
     ];
 
     let users_table = Table::new("users", columns);

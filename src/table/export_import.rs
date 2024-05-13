@@ -339,7 +339,7 @@ impl Table {
                     .zip(column_data_types.iter())
                     .zip(primary_key_info.iter())
                     .map(|((name, data_type), is_primary_key)| {
-                        Column::new(name, data_type.clone(), None, *is_primary_key)
+                        Column::new(name, data_type.clone(), None, *is_primary_key, None)
                     })
                     .collect();
 
@@ -447,7 +447,7 @@ impl Table {
                     .zip(column_data_types.iter())
                     .zip(primary_key_info.iter())
                     .map(|((name, data_type), is_primary_key)| {
-                        Column::new(name, data_type.clone(), None, *is_primary_key)
+                        Column::new(name, data_type.clone(), None, *is_primary_key, None)
                     })
                     .collect();
 

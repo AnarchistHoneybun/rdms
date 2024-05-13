@@ -64,6 +64,12 @@ impl fmt::Display for Value {
     }
 }
 
+#[derive(Debug, Clone)]
+pub struct ForeignKeyInfo {
+    pub reference_table: String,
+    pub reference_column: String,
+}
+
 /// Struct used to store columns.
 /// Each column has a name, datatype and a vector of values of type ColumnDataType.
 #[derive(Debug, Clone)]
@@ -72,6 +78,7 @@ pub struct Column {
     pub data_type: ColumnDataType,
     pub data: Vec<Value>,
     pub is_primary_key: bool,
+    pub foreign_key: Option<ForeignKeyInfo>,
 }
 
 impl Column {
@@ -81,6 +88,7 @@ impl Column {
         data_type: ColumnDataType,
         default_value: Option<Value>,
         is_primary_key: bool,
+        foreign_key: Option<ForeignKeyInfo>,
     ) -> Self {
         Column {
             name: name.to_owned(),
@@ -90,6 +98,7 @@ impl Column {
                 None => Vec::new(),
             },
             is_primary_key,
+            foreign_key,
         }
     }
 }

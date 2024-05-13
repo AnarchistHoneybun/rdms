@@ -83,12 +83,7 @@ impl Table {
         let mut new_primary_key_column: Option<Column> = None;
 
         for column in &self.columns {
-            let mut new_column = Column::new(
-                &*column.name.clone(),
-                column.data_type.clone(),
-                None,
-                column.is_primary_key,
-            );
+            let mut new_column = Column::new(&*column.name.clone(), column.data_type.clone(), None, column.is_primary_key, None);
             new_column.data = column.data.clone();
 
             if column.is_primary_key {
