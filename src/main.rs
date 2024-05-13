@@ -1,6 +1,5 @@
 use crate::column::{Column, ColumnDataType, ForeignKeyInfo};
 
-
 mod column;
 mod table;
 
@@ -10,7 +9,7 @@ mod tests;
 
 fn main() {
     let mut db = database::Database::new("my_db".to_string());
-    
+
     let columns = vec![
         Column::new("id", ColumnDataType::Integer, None, true, None),
         Column::new("user_name", ColumnDataType::Text, None, false, None),
@@ -18,7 +17,6 @@ fn main() {
     ];
 
     db.create_table("users", columns).unwrap();
-
 
     if let Some(users_table) = db.get_table_mut("users") {
         let users_data = vec![
@@ -36,14 +34,18 @@ fn main() {
         users_table.show();
     }
 
-
     let columns = vec![
-        Column::new("user_id", ColumnDataType::Integer, None, false, ForeignKeyInfo::new("users", "id").into()),
+        Column::new(
+            "user_id",
+            ColumnDataType::Integer,
+            None,
+            false,
+            ForeignKeyInfo::new("users", "id").into(),
+        ),
         Column::new("address", ColumnDataType::Text, None, false, None),
     ];
 
     db.create_table("addresses", columns).unwrap();
-
 
     if let Some(address_table) = db.get_table_mut("addresses") {
         // add some data to addresses table

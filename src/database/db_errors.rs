@@ -12,16 +12,24 @@ impl std::fmt::Display for Error {
         match self {
             Error::TableAlreadyExists(table_name) => {
                 write!(f, "Table '{}' already exists in this database", table_name)
-            },
+            }
             Error::MultiplePrimaryKeys => {
                 write!(f, "Multiple columns marked as primary keys")
-            },
+            }
             Error::ReferencedTableNotFound(table_name) => {
-                write!(f, "Referenced table '{}' not found in the database", table_name)
-            },
+                write!(
+                    f,
+                    "Referenced table '{}' not found in the database",
+                    table_name
+                )
+            }
             Error::ReferencedColumnNotFound(table_name, column_name) => {
-                write!(f, "Referenced column '{}' not found in table '{}'", column_name, table_name)
-            },
+                write!(
+                    f,
+                    "Referenced column '{}' not found in table '{}'",
+                    column_name, table_name
+                )
+            }
         }
     }
 }

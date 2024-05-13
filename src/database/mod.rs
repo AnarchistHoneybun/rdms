@@ -1,9 +1,9 @@
 mod db_errors;
 
+use crate::column::Column;
 use crate::database::db_errors::Error;
 use crate::table::Table;
 use std::collections::HashMap;
-use crate::column::Column;
 
 pub struct Database {
     pub name: String,
@@ -39,12 +39,18 @@ impl Database {
             if let Some(fk_info) = &column.foreign_key {
                 // Check if the referenced table exists in the database
                 if !self.tables.contains_key(&fk_info.reference_table) {
-                    return Err(Error::ReferencedTableNotFound(fk_info.reference_table.clone()));
+                    return Err(Error::ReferencedTableNotFound(
+                        fk_info.reference_table.clone(),
+                    ));
                 }
 
                 // Check if the referenced column exists in the referenced table
                 let referenced_table = self.tables.get(&fk_info.reference_table).unwrap(); // Safe to unwrap since we checked for the table's existence
-                if !referenced_table.columns.iter().any(|col| col.name == fk_info.reference_column) {
+                if !referenced_table
+                    .columns
+                    .iter()
+                    .any(|col| col.name == fk_info.reference_column)
+                {
                     return Err(Error::ReferencedColumnNotFound(
                         fk_info.reference_table.clone(),
                         fk_info.reference_column.clone(),
