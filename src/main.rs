@@ -6,6 +6,7 @@ mod table;
 
 #[cfg(test)]
 mod tests;
+mod database;
 
 fn main() {
     // 1. Create a new table
