@@ -1,4 +1,4 @@
-use crate::column::{Column, ColumnDataType};
+use crate::column::{Column, ColumnDataType, ForeignKeyInfo};
 use crate::table::{NestedCondition, Table};
 
 mod column;
@@ -211,5 +211,70 @@ fn main() {
     } else {
         println!("Table 'users' not found in the database");
     }
+
+    // foreign key testing
+
+    let columns = vec![
+        Column::new("user_id", ColumnDataType::Integer, None, true, None),
+        Column::new("user_name", ColumnDataType::Text, None, false, None),
+        Column::new("age", ColumnDataType::Integer, None, false, None),
+    ];
+    let mut table1 = match Table::new("table1", columns) {
+        Ok(table) => table,
+        Err(err) => {
+            eprintln!("Error creating table: {}", err);
+            return;
+        }
+    };
+
+    // insert data into table1
+    let all_data = vec![
+        vec!["1".to_string(), "Alice".to_string(), "27".to_string()],
+        vec!["2".to_string(), "Bob".to_string(), "35".to_string()],
+        vec!["3".to_string(), "Joe".to_string(), "19".to_string()],
+        vec!["4".to_string(), "Steve".to_string(), "40".to_string()],
+    ];
+
+    for data in &all_data {
+        if let Err(err) = table1.insert(data.clone()) {
+            println!("Error inserting data: {}", err);
+        }
+    }
+
+    let columns = vec![
+        Column::new("user_id", ColumnDataType::Integer, None, false, Option::from(ForeignKeyInfo::new("table1", "user_id"))),
+        Column::new("address", ColumnDataType::Text, None, false, None),
+    ];
+
+    let mut table2 = match Table::new("table2", columns) {
+        Ok(table) => table,
+        Err(err) => {
+            eprintln!("Error creating table: {}", err);
+            return;
+        }
+    };
+
+
+    // insert data into table2
+    let all_data = vec![
+        vec!["2".to_string(), "Newark".to_string()],
+        vec!["1".to_string(), "Canada".to_string()],
+        vec!["4".to_string(), "Hilltop".to_string()],
+        vec!["3".to_string(), "Mountains".to_string()],
+    ];
+
+    for data in &all_data {
+        if let Err(err) = table2.insert(data.clone()) {
+            println!("Error inserting data: {}", err);
+        }
+    }
+
+    table1.show();
+    table2.show();
+
+
+
+
+
     print!("\n\n");
 }
