@@ -242,7 +242,13 @@ fn main() {
     }
 
     let columns = vec![
-        Column::new("user_id", ColumnDataType::Integer, None, false, Option::from(ForeignKeyInfo::new("table1", "user_id"))),
+        Column::new(
+            "user_id",
+            ColumnDataType::Integer,
+            None,
+            false,
+            Option::from(ForeignKeyInfo::new("table1", "user_id")),
+        ),
         Column::new("address", ColumnDataType::Text, None, false, None),
     ];
 
@@ -253,7 +259,6 @@ fn main() {
             return;
         }
     };
-
 
     // insert data into table2
     let all_data = vec![
@@ -271,10 +276,6 @@ fn main() {
 
     table1.show();
     table2.show();
-
-
-
-
 
     print!("\n\n");
 }
