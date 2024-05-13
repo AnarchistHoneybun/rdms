@@ -1,6 +1,6 @@
-use std::collections::HashSet;
 use crate::column::{ColumnDataType, Value};
 use crate::table::{Error, Table};
+use std::collections::HashSet;
 
 impl Table {
     /// Inserts a new record into the table.
@@ -20,6 +20,8 @@ impl Table {
     ///
     /// * `Error::MismatchedColumnCount` - If the number of provided data values does not match the number of columns in the table.
     /// * `Error::ParseError` - If a data value cannot be parsed into the corresponding column's data type.
+    /// * `Error::NullPrimaryKey` - If the primary key column value is null.
+    /// * `Error::DuplicatePrimaryKey` - If the primary key value already exists in the table.
     ///
     /// # Examples
     ///
@@ -28,7 +30,7 @@ impl Table {
     /// use crate::table::Table;
     ///
     /// let mut table = Table::new("users", vec![
-    ///     Column::new("id", ColumnDataType::Integer, None),
+    ///     Column::new("id", ColumnDataType::Integer, Some(true)), // Primary key column
     ///     Column::new("name", ColumnDataType::Text, None),
     ///     Column::new("age", ColumnDataType::Integer, None),
     /// ]);
@@ -90,8 +92,7 @@ impl Table {
         Ok(())
     }
 
-    /// Function to insert a new record, but can be formatted to only insert data into specific columns.
-    /// Will fill the other columns with a null value.
+    /// Inserts a new record into the table with data for specific columns.
     ///
     /// # Arguments
     ///
@@ -110,6 +111,10 @@ impl Table {
     /// * `Error::NonExistingColumns` - If one or more of the provided column names do not exist in the table.
     /// * `Error::MismatchedColumnCount` - If the number of provided data items does not match the number of provided column names.
     /// * `Error::ParseError` - If a data item cannot be parsed into the corresponding column's data type.
+    /// * `Error::PrimaryKeyNotProvided` - If the primary key column is not provided in the `column_names` vector.
+    /// * `Error::NullPrimaryKey` - If the primary key column value is null.
+    /// * `Error::DuplicatePrimaryKey` - If the primary key value already exists in the table.
+    ///
     /// # Examples
     ///
     /// ```
@@ -153,7 +158,9 @@ impl Table {
         // Check if the provided columns contain the primary key column
         if let Some(primary_key_column) = &self.primary_key_column {
             if !column_names.contains(&primary_key_column.name) {
-                return Err(Error::PrimaryKeyNotProvided(primary_key_column.name.clone()));
+                return Err(Error::PrimaryKeyNotProvided(
+                    primary_key_column.name.clone(),
+                ));
             }
         }
 

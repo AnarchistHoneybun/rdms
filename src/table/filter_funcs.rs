@@ -1,9 +1,8 @@
-use std::collections::HashSet;
-use crate::table::{Error, NestedCondition, Table};
 use crate::table::helpers::evaluate_nested_conditions;
+use crate::table::{Error, NestedCondition, Table};
+use std::collections::HashSet;
 
 impl Table {
-
     /// Filters the table rows based on the provided nested condition structure and projects the filtered rows with the specified columns.
     ///
     /// # Arguments

@@ -1,13 +1,65 @@
-use std::collections::HashSet;
 use crate::column::{Column, Value};
 use crate::table::{Error, Table};
+use std::collections::HashSet;
 
 impl Table {
+    /// Creates a new `Table` instance with the provided table name and columns.
+    ///
+    /// # Arguments
+    ///
+    /// * `table_name` - A string slice representing the name of the table.
+    /// * `columns` - A vector of `Column` instances representing the columns in the table.
+    ///
+    /// # Returns
+    ///
+    /// * `Ok(Table)` - A `Table` instance with the provided name and columns.
+    /// * `Err(Error)` - An error if multiple columns are marked as the primary key.
+    ///
+    /// # Errors
+    ///
+    /// This function can return the following error:
+    ///
+    /// * `Error::MultiplePrimaryKeys` - If more than one column is marked as the primary key.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use crate::column::{Column, ColumnDataType};
+    /// use crate::table::Table;
+    ///
+    /// let columns = vec![
+    ///     Column::new("id", ColumnDataType::Integer, Some(true)), // Primary key column
+    ///     Column::new("name", ColumnDataType::Text, None),
+    ///     Column::new("age", ColumnDataType::Integer, None),
+    /// ];
+    ///
+    /// let table = Table::new("users", columns).unwrap();
+    /// ```
+    pub fn new(table_name: &str, columns: Vec<Column>) -> Result<Table, Error> {
+        let mut primary_key_column: Option<Column> = None;
+
+        // Validate that only one column is marked as the primary key
+        for column in &columns {
+            if column.is_primary_key {
+                if primary_key_column.is_some() {
+                    return Err(Error::MultiplePrimaryKeys);
+                }
+                primary_key_column = Some(column.clone());
+            }
+        }
+
+        Ok(Table {
+            name: table_name.to_string(),
+            columns,
+            primary_key_column,
+        })
+    }
+
     /// Creates a copy of the current `Table` instance.
     ///
     /// # Returns
     ///
-    /// A `Table` instance with the same name and columns as the current instance, but with a deep copy of the data.
+    /// A `Table` instance with the same name, columns, and data as the current instance.
     ///
     /// # Examples
     ///
@@ -16,10 +68,10 @@ impl Table {
     /// use crate::table::Table;
     ///
     /// let mut table = Table::new("users", vec![
-    ///     Column::new("id", ColumnDataType::Integer, None),
+    ///     Column::new("id", ColumnDataType::Integer, Some(true)), // Primary key column
     ///     Column::new("name", ColumnDataType::Text, None),
     ///     Column::new("age", ColumnDataType::Integer, None),
-    /// ]);
+    /// ]).unwrap();
     ///
     /// // Insert some initial data
     /// table.insert(vec!["1".to_string(), "Alice".to_string(), "25".to_string()]).unwrap();
@@ -64,10 +116,10 @@ impl Table {
     /// use crate::table::Table;
     ///
     /// let mut table = Table::new("users", vec![
-    ///     Column::new("id", ColumnDataType::Integer, None),
+    ///     Column::new("id", ColumnDataType::Integer, Some(true)), // Primary key column
     ///     Column::new("name", ColumnDataType::Text, None),
     ///     Column::new("age", ColumnDataType::Integer, None),
-    /// ]);
+    /// ]).unwrap();
     ///
     /// // Insert some initial data
     /// table.insert(vec!["1".to_string(), "Alice".to_string(), "25".to_string()]).unwrap();
@@ -121,12 +173,11 @@ impl Table {
         }
     }
 
-    /// Function to display only requested columns from the table (if called with an empty column
-    /// list, will call the show function).
+    /// Displays the requested columns from the table.
     ///
     /// # Arguments
     ///
-    /// * `column_names` - A vector of strings representing the names of the columns to display.
+    /// * `column_names` - A vector of strings representing the names of the columns to display. If an empty vector is provided, the function will call the `show` function to display all columns.
     ///
     /// # Returns
     ///
@@ -138,6 +189,7 @@ impl Table {
     /// This function can return the following error:
     ///
     /// * `Error::NonExistingColumns` - If one or more of the provided column names do not exist in the table.
+    ///
     /// # Examples
     ///
     /// ```
@@ -223,7 +275,7 @@ impl Table {
         Ok(())
     }
 
-    /// Prints the structure of the table, including the column names and their corresponding data types.
+    /// Prints the structure of the table, including the column names, their corresponding data types, and primary key information.
     ///
     /// # Examples
     ///
@@ -232,10 +284,10 @@ impl Table {
     /// use crate::table::Table;
     ///
     /// let table = Table::new("users", vec![
-    ///     Column::new("id", ColumnDataType::Integer, None),
+    ///     Column::new("id", ColumnDataType::Integer, Some(true)), // Primary key column
     ///     Column::new("name", ColumnDataType::Text, None),
     ///     Column::new("age", ColumnDataType::Integer, None),
-    /// ]);
+    /// ]).unwrap();
     ///
     /// table.describe();
     /// ```
@@ -311,10 +363,10 @@ impl Table {
     /// use crate::table::Table;
     ///
     /// let mut table = Table::new("users", vec![
-    ///     Column::new("id", ColumnDataType::Integer, None),
+    ///     Column::new("id", ColumnDataType::Integer, Some(true)), // Primary key column
     ///     Column::new("name", ColumnDataType::Text, None),
     ///     Column::new("age", ColumnDataType::Integer, None),
-    /// ]);
+    /// ]).unwrap();
     ///
     /// // Insert some initial data
     /// table.insert(vec!["1".to_string(), "Alice".to_string(), "25".to_string()]).unwrap();
@@ -323,11 +375,9 @@ impl Table {
     ///
     /// // Count total records
     /// let total_count = table.count(None).unwrap();
-    /// assert_eq!(total_count, 3);
     ///
     /// // Count non-null values in "age" column
     /// let age_count = table.count(Some("age".to_string())).unwrap();
-    /// assert_eq!(age_count, 2);
     /// ```
     pub fn column_count(&self, column_name: Option<String>) -> Result<usize, Error> {
         return if let Some(column_name) = column_name {

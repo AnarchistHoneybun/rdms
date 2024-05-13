@@ -3,6 +3,8 @@ use crate::table::{NestedCondition, Table};
 
 mod column;
 mod table;
+
+#[cfg(test)]
 mod tests;
 
 fn main() {
