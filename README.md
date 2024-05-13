@@ -26,7 +26,8 @@ Currently, what we have is:
   - Filter records (can be used with projection)
   - Describe the table
   - Exporting/Importing tables (currently imports only work for the formatting of the export, actively trying to figure out how to standardize them further)
-> **Note:** The tests directory is not included in the repo.
+> [!NOTE]
+> The tests directory is not included in the repo.
 > Please write them yourself while testing or raise an issue if you want me to add them.
 
 ## The Road Ahead
