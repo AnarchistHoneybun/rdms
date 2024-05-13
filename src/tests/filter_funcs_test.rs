@@ -1,5 +1,5 @@
 use crate::column::{Column, ColumnDataType};
-use crate::table::{Error, NestedCondition, Table};
+use crate::table::{errors::Error, NestedCondition, Table};
 
 #[test]
 fn test_filter_with_nested_conditions() {

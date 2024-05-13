@@ -1,5 +1,5 @@
 use crate::column::{Column, ColumnDataType};
-use crate::table::{Error, NestedCondition, Table};
+use crate::table::{errors::Error, NestedCondition, Table};
 
 #[test]
 fn test_update_column() {
@@ -11,7 +11,7 @@ fn test_update_column() {
             Column::new("score", ColumnDataType::Float, None, false),
         ],
     )
-    .unwrap();
+        .unwrap();
 
     // Insert some initial data
     table
@@ -43,6 +43,10 @@ fn test_update_column() {
     // Test updating with an invalid value for the column data type
     let result = table.update_column("score", "invalid");
     assert!(matches!(result, Err(Error::ParseError(0, _))));
+
+    // Test updating the primary key column
+    let result = table.update_column("id", "100");
+    assert!(matches!(result, Err(Error::CannotBatchUpdatePrimaryKey)));
 }
 
 #[test]
@@ -55,7 +59,7 @@ fn test_update_with_nested_conditions() {
             Column::new("age", ColumnDataType::Integer, None, false),
         ],
     )
-    .unwrap();
+        .unwrap();
 
     // Insert some initial data
     table
@@ -130,4 +134,31 @@ fn test_update_with_nested_conditions() {
         nested_condition,
     );
     assert!(matches!(result, Err(Error::InvalidOperator(_))));
+
+    // Test updating with a non-existing column to update
+    let nested_condition =
+        NestedCondition::Condition("age".to_string(), "=".to_string(), "30".to_string());
+    let result = table.update_with_nested_conditions(
+        ("invalid".to_string(), "Sam".to_string()),
+        nested_condition,
+    );
+    assert!(matches!(result, Err(Error::NonExistingColumn(_))));
+
+    // Test updating with an invalid value for the column data type
+    let nested_condition =
+        NestedCondition::Condition("user_id".to_string(), "=".to_string(), "3".to_string());
+    let result = table.update_with_nested_conditions(
+        ("age".to_string(), "Sam".to_string()),
+        nested_condition,
+    );
+    assert!(matches!(result, Err(Error::ParseError(1, _))));
+
+    // Test updating the primary key column with duplicate values
+    let nested_condition =
+        NestedCondition::Condition("age".to_string(), "=".to_string(), "30".to_string());
+    let result = table.update_with_nested_conditions(
+        ("user_id".to_string(), "1".to_string()),
+        nested_condition,
+    );
+    assert!(matches!(result, Err(Error::DuplicatePrimaryKey)));
 }

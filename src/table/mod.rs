@@ -1,4 +1,4 @@
-mod errors;
+pub(crate) mod errors;
 mod export_import;
 mod filter_funcs;
 mod helpers;
