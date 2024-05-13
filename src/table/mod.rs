@@ -1,4 +1,4 @@
-pub(crate) mod errors;
+pub(crate) mod table_errors;
 mod export_import;
 mod filter_funcs;
 mod helpers;
@@ -8,7 +8,7 @@ mod table_utils;
 mod update_funcs;
 
 use crate::column::Column;
-use crate::table::errors::Error;
+use crate::table::table_errors::Error;
 
 #[derive(Debug)]
 pub enum NestedCondition {

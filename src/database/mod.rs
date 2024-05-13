@@ -1,6 +1,6 @@
-mod errors;
+mod db_errors;
 
-use crate::database::errors::Error;
+use crate::database::db_errors::Error;
 use crate::table::Table;
 use std::collections::HashMap;
 

@@ -1,5 +1,5 @@
 use crate::column::{Column, ColumnDataType};
-use crate::table::{errors::Error, Table};
+use crate::table::{table_errors::Error, Table};
 
 #[test]
 fn test_insert() {
