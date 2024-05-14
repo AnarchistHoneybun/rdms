@@ -1,5 +1,9 @@
 # CYPRIOT
 
+![](/public/code_graph.png)
+
+<p align="center">Source code graph made through `dep-tree`</p>
+
 An attempt at creating a relational database management system in Rust.  
 Couple of things to note:
 - I don't know why I'm naming this cypriot.
