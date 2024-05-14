@@ -59,11 +59,7 @@ impl Database {
             }
         }
 
-        let table = Table {
-            name: table_name.to_string(),
-            columns,
-            primary_key_column,
-        };
+        let table= Table::new(table_name, columns).unwrap();
 
         self.tables.insert(table.name.clone(), table);
         Ok(())
