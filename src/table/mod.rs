@@ -19,7 +19,7 @@ pub enum NestedCondition {
 
 /// Struct representing a table with a name and a vector of columns
 /// (data is stored inside the column struct).
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Table {
     pub(crate) name: String,
     pub(crate) columns: Vec<Column>,

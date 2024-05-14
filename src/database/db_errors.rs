@@ -1,10 +1,17 @@
+use crate::table::table_errors;
+
 #[derive(Debug)]
 
 pub enum Error {
     TableAlreadyExists(String),
+    TableNotFound(String),
     MultiplePrimaryKeys,
     ReferencedTableNotFound(String),
     ReferencedColumnNotFound(String, String),
+    NullForeignKey(String),
+    ForeignKeyViolation(String, String, String),
+    ParseError(usize, String),
+    TableError(table_errors::Error),
 }
 
 impl std::fmt::Display for Error {
@@ -30,8 +37,68 @@ impl std::fmt::Display for Error {
                     column_name, table_name
                 )
             }
+            Error::TableNotFound(table_name) => {
+                write!(f, "Table '{}' not found in this database", table_name)
+            }
+            Error::NullForeignKey(column_name) => {
+                write!(f, "Foreign key column '{}' cannot be null", column_name)
+            }
+            Error::ForeignKeyViolation(value, column_name, reference_table) => {
+                write!(
+                    f,
+                    "Foreign key violation: value '{}' in column '{}' does not exist in table '{}'",
+                    value, column_name, reference_table
+                )
+            }
+            Error::ParseError(index, value) => {
+                write!(f, "Failed to parse value '{}' at index {}", value, index)
+            }
+            Error::TableError(err) => write!(f, "{}", err),
         }
     }
 }
 
 impl std::error::Error for Error {}
+
+impl From<table_errors::Error> for Error {
+    fn from(err: table_errors::Error) -> Self {
+        match err {
+            table_errors::Error::MismatchedColumnCount => {
+                Error::TableError(table_errors::Error::MismatchedColumnCount)
+            }
+            table_errors::Error::ParseError(index, value) => {
+                Error::TableError(table_errors::Error::ParseError(index, value))
+            }
+            table_errors::Error::NonExistingColumns(columns) => {
+                Error::TableError(table_errors::Error::NonExistingColumns(columns))
+            }
+            table_errors::Error::NonExistingColumn(column_name) => {
+                Error::TableError(table_errors::Error::NonExistingColumn(column_name))
+            }
+            table_errors::Error::InvalidOperator(operator_str) => {
+                Error::TableError(table_errors::Error::InvalidOperator(operator_str))
+            }
+            table_errors::Error::FileError(msg) => {
+                Error::TableError(table_errors::Error::FileError(msg))
+            }
+            table_errors::Error::InvalidFormat(format) => {
+                Error::TableError(table_errors::Error::InvalidFormat(format))
+            }
+            table_errors::Error::MultiplePrimaryKeys => {
+                Error::TableError(table_errors::Error::MultiplePrimaryKeys)
+            }
+            table_errors::Error::DuplicatePrimaryKey => {
+                Error::TableError(table_errors::Error::DuplicatePrimaryKey)
+            }
+            table_errors::Error::NullPrimaryKey => {
+                Error::TableError(table_errors::Error::NullPrimaryKey)
+            }
+            table_errors::Error::CannotBatchUpdatePrimaryKey => {
+                Error::TableError(table_errors::Error::CannotBatchUpdatePrimaryKey)
+            }
+            table_errors::Error::PrimaryKeyNotProvided(column_name) => {
+                Error::TableError(table_errors::Error::PrimaryKeyNotProvided(column_name))
+            }
+        }
+    }
+}
