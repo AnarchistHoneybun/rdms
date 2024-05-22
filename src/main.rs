@@ -1,4 +1,5 @@
 use crate::column::{Column, ColumnDataType, ForeignKeyInfo};
+use crate::table::NestedCondition;
 
 mod column;
 mod table;
@@ -72,5 +73,28 @@ fn main() {
     if let Some(table) = db.get_table("addresses") {
         table.show();
     }
+
+    if let Err(err) = db.update_column_in_table("addresses", "user_id", "7") {
+        eprintln!("Error updating column: {}", err);
+    }
+
+    // Update the "address" column with "999 Oak St." for records where "user_id" is 3
+    let nested_condition = NestedCondition::Condition(
+        "user_id".to_string(),
+        "=".to_string(),
+        "3".to_string(),
+    );
+    db.update_with_nested_conditions_in_table(
+        "addresses",
+        ("address".to_string(), "999 Oak St.".to_string()),
+        nested_condition,
+    )
+        .unwrap();
+
+    // Print the table
+    if let Some(table) = db.get_table("addresses") {
+        table.show();
+    }
+
 
 }
