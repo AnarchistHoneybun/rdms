@@ -64,6 +64,10 @@ fn main() {
         }
     }
 
+    if let Err(err) = db.insert_with_columns_into_table("addresses", vec!["address".to_string()], vec!["999 Oak St.".to_string()]) {
+        eprintln!("Error inserting data: {}", err);
+    }
+
     // Print the table
     if let Some(table) = db.get_table("addresses") {
         table.show();

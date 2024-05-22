@@ -10,6 +10,7 @@ pub enum Error {
     ReferencedColumnNotFound(String, String),
     NullForeignKey(String),
     ForeignKeyViolation(String, String, String),
+    MissingForeignKeyColumns(Vec<String>),
     ParseError(usize, String),
     TableError(table_errors::Error),
 }
@@ -48,6 +49,13 @@ impl std::fmt::Display for Error {
                     f,
                     "Foreign key violation: value '{}' in column '{}' does not exist in table '{}'",
                     value, column_name, reference_table
+                )
+            }
+            Error::MissingForeignKeyColumns(columns) => {
+                write!(
+                    f,
+                    "The following foreign key columns are missing: {}",
+                    columns.join(", ")
                 )
             }
             Error::ParseError(index, value) => {
