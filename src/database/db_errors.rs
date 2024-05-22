@@ -13,6 +13,7 @@ pub enum Error {
     MissingForeignKeyColumns(Vec<String>),
     ParseError(usize, String),
     TableError(table_errors::Error),
+
 }
 
 impl std::fmt::Display for Error {
