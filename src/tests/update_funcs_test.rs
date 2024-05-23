@@ -6,9 +6,9 @@ fn test_update_column() {
     let mut table = Table::new(
         "test_table",
         vec![
-            Column::new("id", ColumnDataType::Integer, None, true),
-            Column::new("name", ColumnDataType::Text, None, false),
-            Column::new("score", ColumnDataType::Float, None, false),
+            Column::new("id", ColumnDataType::Integer, None, true, None),
+            Column::new("name", ColumnDataType::Text, None, false, None),
+            Column::new("score", ColumnDataType::Float, None, false, None),
         ],
     )
     .unwrap();
@@ -54,9 +54,9 @@ fn test_update_with_nested_conditions() {
     let mut table = Table::new(
         "test_table",
         vec![
-            Column::new("user_id", ColumnDataType::Integer, None, true),
-            Column::new("user_name", ColumnDataType::Text, None, false),
-            Column::new("age", ColumnDataType::Integer, None, false),
+            Column::new("user_id", ColumnDataType::Integer, None, true, None),
+            Column::new("user_name", ColumnDataType::Text, None, false, None),
+            Column::new("age", ColumnDataType::Integer, None, false, None),
         ],
     )
     .unwrap();

@@ -5,8 +5,6 @@ mod insert_funcs;
 mod operators;
 pub(crate) mod table_errors;
 mod table_utils;
-#[cfg(test)]
-mod tests;
 mod update_funcs;
 
 use crate::column::Column;

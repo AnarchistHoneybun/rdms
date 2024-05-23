@@ -5,6 +5,8 @@ mod column;
 mod table;
 
 mod database;
+#[cfg(test)]
+mod tests;
 
 fn main() {
     let mut db = database::Database::new("my_db".to_string());
