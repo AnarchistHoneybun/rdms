@@ -2,7 +2,7 @@ use std::collections::HashMap;
 
 use crate::column::{Column, ColumnDataType, Value};
 use crate::database::db_errors::Error;
-use crate::table::{NestedCondition, Table, table_errors};
+use crate::table::{table_errors, NestedCondition, Table};
 
 mod db_errors;
 
@@ -60,11 +60,17 @@ impl Database {
             }
         }
 
-        let table= Table::new(table_name, columns).unwrap();
+        let table = Table::new(table_name, columns).unwrap();
 
-        for (column, fk_info) in table.columns.iter().filter_map(|col| col.foreign_key.as_ref().map(|fk| (col, fk))) {
+        for (column, fk_info) in table
+            .columns
+            .iter()
+            .filter_map(|col| col.foreign_key.as_ref().map(|fk| (col, fk)))
+        {
             if let Some(referenced_table) = self.tables.get_mut(&fk_info.reference_table) {
-                referenced_table.referenced_as_foreign_key.push((table.name.clone(), column.name.clone()));
+                referenced_table
+                    .referenced_as_foreign_key
+                    .push((table.name.clone(), column.name.clone()));
             }
         }
 
@@ -72,12 +78,7 @@ impl Database {
         Ok(())
     }
 
-    pub fn insert_into_table(
-        &mut self,
-        table_name: &str,
-        data: Vec<String>,
-    ) -> Result<(), Error> {
-
+    pub fn insert_into_table(&mut self, table_name: &str, data: Vec<String>) -> Result<(), Error> {
         let copied_tables = self.tables.clone();
 
         let table = self
@@ -89,10 +90,9 @@ impl Database {
         for (column_idx, value_str) in data.iter().enumerate() {
             let column = &table.columns[column_idx];
             if let Some(fk_info) = &column.foreign_key {
-                let referenced_table = copied_tables
-                    .get(&fk_info.reference_table)
-                    .cloned()
-                    .ok_or(Error::ReferencedTableNotFound(fk_info.reference_table.clone()))?;
+                let referenced_table = copied_tables.get(&fk_info.reference_table).cloned().ok_or(
+                    Error::ReferencedTableNotFound(fk_info.reference_table.clone()),
+                )?;
 
                 let referenced_column = referenced_table
                     .columns
@@ -107,12 +107,16 @@ impl Database {
                     Value::Null
                 } else {
                     match column.data_type {
-                        ColumnDataType::Integer => Value::Integer(value_str.parse().map_err(|_| {
-                            Error::ParseError(column_idx, value_str.to_owned())
-                        })?),
-                        ColumnDataType::Float => Value::Float(value_str.parse().map_err(|_| {
-                            Error::ParseError(column_idx, value_str.to_owned())
-                        })?),
+                        ColumnDataType::Integer => Value::Integer(
+                            value_str
+                                .parse()
+                                .map_err(|_| Error::ParseError(column_idx, value_str.to_owned()))?,
+                        ),
+                        ColumnDataType::Float => Value::Float(
+                            value_str
+                                .parse()
+                                .map_err(|_| Error::ParseError(column_idx, value_str.to_owned()))?,
+                        ),
                         ColumnDataType::Text => Value::Text(value_str.to_owned()),
                     }
                 };
@@ -170,13 +174,14 @@ impl Database {
                 .columns
                 .iter()
                 .find(|col| col.name == *column_name)
-                .ok_or_else(|| Error::TableError(table_errors::Error::NonExistingColumn(column_name.clone())))?;
+                .ok_or_else(|| {
+                    Error::TableError(table_errors::Error::NonExistingColumn(column_name.clone()))
+                })?;
 
             if let Some(fk_info) = &column.foreign_key {
-                let referenced_table = copied_tables
-                    .get(&fk_info.reference_table)
-                    .cloned()
-                    .ok_or(Error::ReferencedTableNotFound(fk_info.reference_table.clone()))?;
+                let referenced_table = copied_tables.get(&fk_info.reference_table).cloned().ok_or(
+                    Error::ReferencedTableNotFound(fk_info.reference_table.clone()),
+                )?;
 
                 let referenced_column = referenced_table
                     .columns
@@ -191,11 +196,19 @@ impl Database {
                     Value::Null
                 } else {
                     match column.data_type {
-                        ColumnDataType::Integer => Value::Integer(value_str.parse().map_err(|_| {
-                            Error::TableError(table_errors::Error::ParseError(column_idx, value_str.to_owned()))
-                        })?),
+                        ColumnDataType::Integer => {
+                            Value::Integer(value_str.parse().map_err(|_| {
+                                Error::TableError(table_errors::Error::ParseError(
+                                    column_idx,
+                                    value_str.to_owned(),
+                                ))
+                            })?)
+                        }
                         ColumnDataType::Float => Value::Float(value_str.parse().map_err(|_| {
-                            Error::TableError(table_errors::Error::ParseError(column_idx, value_str.to_owned()))
+                            Error::TableError(table_errors::Error::ParseError(
+                                column_idx,
+                                value_str.to_owned(),
+                            ))
                         })?),
                         ColumnDataType::Text => Value::Text(value_str.to_owned()),
                     }
@@ -227,7 +240,6 @@ impl Database {
         column_name: &str,
         new_value: &str,
     ) -> Result<(), Error> {
-
         let copied_tables = self.tables.clone();
 
         let table = self
@@ -236,17 +248,19 @@ impl Database {
             .ok_or(Error::TableNotFound(table_name.to_owned()))?;
 
         // Check if the column is a foreign key column
-        let column = table
-            .columns
-            .iter()
-            .find(|c| c.name == column_name)
-            .ok_or(Error::TableError(table_errors::Error::NonExistingColumn(column_name.to_string())))?;
+        let column =
+            table
+                .columns
+                .iter()
+                .find(|c| c.name == column_name)
+                .ok_or(Error::TableError(table_errors::Error::NonExistingColumn(
+                    column_name.to_string(),
+                )))?;
 
         if let Some(fk_info) = &column.foreign_key {
-            let referenced_table = copied_tables
-                .get(&fk_info.reference_table)
-                .cloned()
-                .ok_or(Error::ReferencedTableNotFound(fk_info.reference_table.clone()))?;
+            let referenced_table = copied_tables.get(&fk_info.reference_table).cloned().ok_or(
+                Error::ReferencedTableNotFound(fk_info.reference_table.clone()),
+            )?;
 
             let referenced_column = referenced_table
                 .columns
@@ -308,13 +322,14 @@ impl Database {
             .columns
             .iter()
             .find(|c| c.name == update_input.0)
-            .ok_or(Error::TableError(table_errors::Error::NonExistingColumn(update_input.0.clone())))?;
+            .ok_or(Error::TableError(table_errors::Error::NonExistingColumn(
+                update_input.0.clone(),
+            )))?;
 
         if let Some(fk_info) = &update_column.foreign_key {
-            let referenced_table = copied_tables
-                .get(&fk_info.reference_table)
-                .cloned()
-                .ok_or(Error::ReferencedTableNotFound(fk_info.reference_table.clone()))?;
+            let referenced_table = copied_tables.get(&fk_info.reference_table).cloned().ok_or(
+                Error::ReferencedTableNotFound(fk_info.reference_table.clone()),
+            )?;
 
             let referenced_column = referenced_table
                 .columns

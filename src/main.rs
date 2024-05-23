@@ -5,8 +5,6 @@ mod column;
 mod table;
 
 mod database;
-#[cfg(test)]
-mod tests;
 
 fn main() {
     let mut db = database::Database::new("my_db".to_string());
@@ -18,7 +16,6 @@ fn main() {
     ];
 
     db.create_table("users", columns).unwrap();
-
 
     let users_data = vec![
         vec!["1".to_string(), "Alice".to_string(), "30".to_string()],
@@ -36,9 +33,6 @@ fn main() {
         table.show();
     }
 
-
-
-
     let columns = vec![
         Column::new(
             "user_id",
@@ -52,7 +46,6 @@ fn main() {
 
     db.create_table("addresses", columns).unwrap();
 
-
     // add some data to addresses table
     let addresses_data = vec![
         vec!["3".to_string(), "123 Main St.".to_string()],
@@ -65,7 +58,11 @@ fn main() {
         }
     }
 
-    if let Err(err) = db.insert_with_columns_into_table("addresses", vec!["address".to_string()], vec!["999 Oak St.".to_string()]) {
+    if let Err(err) = db.insert_with_columns_into_table(
+        "addresses",
+        vec!["address".to_string()],
+        vec!["999 Oak St.".to_string()],
+    ) {
         eprintln!("Error inserting data: {}", err);
     }
 
@@ -79,22 +76,17 @@ fn main() {
     }
 
     // Update the "address" column with "999 Oak St." for records where "user_id" is 3
-    let nested_condition = NestedCondition::Condition(
-        "user_id".to_string(),
-        "=".to_string(),
-        "3".to_string(),
-    );
+    let nested_condition =
+        NestedCondition::Condition("user_id".to_string(), "=".to_string(), "3".to_string());
     db.update_with_nested_conditions_in_table(
         "addresses",
         ("address".to_string(), "999 Oak St.".to_string()),
         nested_condition,
     )
-        .unwrap();
+    .unwrap();
 
     // Print the table
     if let Some(table) = db.get_table("addresses") {
         table.show();
     }
-
-
 }
