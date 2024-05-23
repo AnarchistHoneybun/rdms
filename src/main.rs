@@ -5,7 +5,6 @@ mod column;
 mod table;
 
 mod database;
-#[cfg(test)]
 mod tests;
 
 fn main() {

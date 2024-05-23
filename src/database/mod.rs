@@ -318,26 +318,17 @@ impl Database {
             .get_mut(table_name)
             .ok_or(Error::TableNotFound(table_name.to_owned()))?;
 
-        let is_primary_key_column = table
-            .primary_key_column
-            .as_ref()
-            .map(|c| c.name == update_input.0)
-            .unwrap_or(false);
-
-        let old_table_copy = table.copy();
-
         let update_column = table
             .columns
             .iter()
             .find(|c| c.name == update_input.0)
-            .ok_or(Error::TableError(table_errors::Error::NonExistingColumn(
-                update_input.0.clone(),
-            )))?;
+            .ok_or(Error::TableError(table_errors::Error::NonExistingColumn(update_input.0.clone())))?;
 
         if let Some(fk_info) = &update_column.foreign_key {
-            let referenced_table = copied_tables.get(&fk_info.reference_table).cloned().ok_or(
-                Error::ReferencedTableNotFound(fk_info.reference_table.clone()),
-            )?;
+            let referenced_table = copied_tables
+                .get(&fk_info.reference_table)
+                .cloned()
+                .ok_or(Error::ReferencedTableNotFound(fk_info.reference_table.clone()))?;
 
             let referenced_column = referenced_table
                 .columns
@@ -380,49 +371,6 @@ impl Database {
         }
 
         table.update_with_nested_conditions(update_input, nested_condition)?;
-
-        if is_primary_key_column {
-            let primary_key_column_name = table
-                .primary_key_column
-                .as_ref()
-                .map(|c| c.name.clone())
-                .unwrap_or_default();
-
-            let mut old_primary_key_value = None;
-            let mut new_primary_key_value = None;
-
-            // Iterate over the old and new table data
-            for (old_row, new_row) in old_table_copy.columns.iter().zip(table.columns.iter()) {
-                if old_row.name == primary_key_column_name {
-                    for (old_value, new_value) in old_row.data.iter().zip(new_row.data.iter()) {
-                        if old_value != new_value {
-                            old_primary_key_value = Some(old_value.clone());
-                            new_primary_key_value = Some(new_value.clone());
-                            break;
-                        }
-                    }
-                }
-            }
-
-            // Check if the primary key value has changed
-
-            if let (Some(old_primary_key_value), Some(new_primary_key_value)) = (old_primary_key_value, new_primary_key_value) {
-
-                // update the referencing tables
-                for (referencing_table_name, referencing_column_name) in &table.referenced_as_foreign_key {
-                    if let Some(referencing_table) = self.tables.get_mut(referencing_table_name) {
-                        if let Some(referencing_column) = referencing_table.columns.iter_mut().find(|c| c.name == *referencing_column_name) {
-                            for row in &mut referencing_column.data {
-                                if *row == old_primary_key_value {
-                                    *row = new_primary_key_value.clone();
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-
-        }
 
         Ok(())
     }
