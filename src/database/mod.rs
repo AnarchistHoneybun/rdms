@@ -62,6 +62,12 @@ impl Database {
 
         let table= Table::new(table_name, columns).unwrap();
 
+        for (column, fk_info) in table.columns.iter().filter_map(|col| col.foreign_key.as_ref().map(|fk| (col, fk))) {
+            if let Some(referenced_table) = self.tables.get_mut(&fk_info.reference_table) {
+                referenced_table.referenced_as_foreign_key.push((table.name.clone(), column.name.clone()));
+            }
+        }
+
         self.tables.insert(table.name.clone(), table);
         Ok(())
     }
