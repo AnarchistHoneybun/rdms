@@ -1,5 +1,5 @@
 use crate::column::{Column, ColumnDataType, Value};
-use crate::table::{operators::Operator, Error, NestedCondition};
+use crate::table::{operators::Operator, table_errors, NestedCondition};
 
 /// Evaluates a nested condition structure against a specific row in the table.
 ///
@@ -24,23 +24,23 @@ pub(crate) fn evaluate_nested_conditions(
     condition: &NestedCondition,
     columns: &[Column],
     row_idx: usize,
-) -> Result<bool, Error> {
+) -> Result<bool, table_errors::Error> {
     match condition {
         NestedCondition::Condition(column_name, operator, value) => {
             let cond_column_data_type = columns
                 .iter()
                 .find(|c| c.name == *column_name)
-                .ok_or(Error::NonExistingColumn(column_name.clone()))?
+                .ok_or(table_errors::Error::NonExistingColumn(column_name.clone()))?
                 .data_type
                 .clone();
 
             let operator = Operator::from_str(&operator)
-                .map_err(|_e| Error::InvalidOperator(operator.clone()))?;
+                .map_err(|_e| table_errors::Error::InvalidOperator(operator.clone()))?;
 
             let ref_value = columns
                 .iter()
                 .find(|c| c.name == *column_name)
-                .ok_or(Error::NonExistingColumn(column_name.clone()))?
+                .ok_or(table_errors::Error::NonExistingColumn(column_name.clone()))?
                 .data
                 .get(row_idx)
                 .cloned();

@@ -2,7 +2,7 @@ mod export_import;
 mod filter_funcs;
 mod helpers;
 mod insert_funcs;
-mod operators;
+pub(crate) mod operators;
 pub(crate) mod table_errors;
 mod table_utils;
 mod update_funcs;

@@ -13,6 +13,7 @@ pub enum Error {
     MissingForeignKeyColumns(Vec<String>),
     ParseError(usize, String),
     TableError(table_errors::Error),
+    DuplicatePrimaryKey,
 }
 
 impl std::fmt::Display for Error {
@@ -62,6 +63,9 @@ impl std::fmt::Display for Error {
                 write!(f, "Failed to parse value '{}' at index {}", value, index)
             }
             Error::TableError(err) => write!(f, "{}", err),
+            Error::DuplicatePrimaryKey => {
+                write!(f, "Duplicate update on primary key")
+            }
         }
     }
 }
