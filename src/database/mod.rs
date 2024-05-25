@@ -402,18 +402,17 @@ impl Database {
 
         if is_primary_key_update {
             let columns_clone = table.columns.clone();
-            for (row_idx, _) in table.columns[0].data.iter().enumerate() {
-                if evaluate_nested_conditions(&nested_condition, &columns_clone, row_idx)? {
-                    update_count += 1;
-                    let pk_value = table
-                        .primary_key_column
-                        .as_ref()
-                        .unwrap()
-                        .data
-                        .get(row_idx)
-                        .cloned()
-                        .unwrap();
-                    old_primary_key_values.push(pk_value);
+            if let Some(primary_key_column) = &table.primary_key_column {
+                for (row_idx, _) in primary_key_column.data.iter().enumerate() {
+                    if evaluate_nested_conditions(&nested_condition, &columns_clone, row_idx)? {
+                        update_count += 1;
+                        let pk_value = primary_key_column
+                            .data
+                            .get(row_idx)
+                            .cloned()
+                            .unwrap();
+                        old_primary_key_values.push(pk_value);
+                    }
                 }
             }
 
@@ -453,36 +452,42 @@ impl Database {
         old_pk_value: Value,
         new_pk_value: Value,
     ) -> Result<(), Error> {
-        let table = self
+        let mut table = self
             .tables
             .get_mut(table_name)
-            .ok_or(Error::TableNotFound(table_name.to_owned()))?;
+            .ok_or(Error::TableNotFound(table_name.to_owned()))?
+            .clone();
 
-        for (ref_table_name, ref_column_name) in &table.referenced_as_foreign_key {
+        let mut tables_to_propagate = Vec::new();
+
+        for (ref_table_name, ref_column_name) in table.referenced_as_foreign_key.drain(..) {
             let ref_table = self
                 .tables
-                .get_mut(ref_table_name)
+                .get_mut(&ref_table_name)
                 .ok_or(Error::TableNotFound(ref_table_name.clone()))?;
 
             let fk_column = ref_table
                 .columns
                 .iter_mut()
-                .find(|col| col.name == *ref_column_name)
+                .find(|col| col.name == ref_column_name)
                 .ok_or(Error::TableError(table_errors::Error::NonExistingColumn(
                     ref_column_name.clone(),
                 )))?;
 
             let is_fk_primary_key = ref_table.primary_key_column.as_ref().map(|pk_col| pk_col.name == fk_column.name).unwrap_or(false);
 
-            for (row_idx, value) in fk_column.data.iter_mut().enumerate() {
+            for (_, value) in fk_column.data.iter_mut().enumerate() {
                 if *value == old_pk_value {
                     *value = new_pk_value.clone();
-
                     if is_fk_primary_key {
-                        self.propagate_primary_key_changes(ref_table_name, old_pk_value.clone(), new_pk_value.clone())?;
+                        tables_to_propagate.push(ref_table_name.clone());
                     }
                 }
             }
+        }
+
+        for table_to_propagate in tables_to_propagate {
+            self.propagate_primary_key_changes(&table_to_propagate, old_pk_value.clone(), new_pk_value.clone())?;
         }
 
         Ok(())
