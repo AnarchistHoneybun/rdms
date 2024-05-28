@@ -91,12 +91,14 @@ fn main() {
         table.show();
     }
 
-    let nested_condition = NestedCondition::Condition("user_name".to_string(), "=".to_string(), "Bob".to_string());
+    let nested_condition =
+        NestedCondition::Condition("user_name".to_string(), "=".to_string(), "Bob".to_string());
     db.update_with_nested_conditions_in_table(
         "users",
         ("id".to_string(), "31".to_string()),
         nested_condition,
-    ).unwrap();
+    )
+    .unwrap();
 
     // Print the table
     if let Some(table) = db.get_table("users") {
@@ -105,6 +107,4 @@ fn main() {
     if let Some(table) = db.get_table("addresses") {
         table.show();
     }
-
-
 }

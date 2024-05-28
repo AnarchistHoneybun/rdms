@@ -2,7 +2,7 @@ use std::collections::HashMap;
 
 use crate::column::{Column, ColumnDataType, Value};
 use crate::database::db_errors::Error;
-use crate::table::{NestedCondition, Table, table_errors};
+use crate::table::{table_errors, NestedCondition, Table};
 
 mod db_errors;
 mod helpers;
@@ -324,7 +324,9 @@ impl Database {
             .columns
             .iter()
             .find(|c| c.name == update_input.0)
-            .ok_or(Error::TableError(table_errors::Error::NonExistingColumn(update_input.0.clone())))?;
+            .ok_or(Error::TableError(table_errors::Error::NonExistingColumn(
+                update_input.0.clone(),
+            )))?;
 
         let is_primary_key_column = update_column.is_primary_key;
 
@@ -338,13 +340,10 @@ impl Database {
 
         dbg!(&old_primary_key_values);
 
-
-
         if let Some(fk_info) = &update_column.foreign_key {
-            let referenced_table = copied_tables
-                .get(&fk_info.reference_table)
-                .cloned()
-                .ok_or(Error::ReferencedTableNotFound(fk_info.reference_table.clone()))?;
+            let referenced_table = copied_tables.get(&fk_info.reference_table).cloned().ok_or(
+                Error::ReferencedTableNotFound(fk_info.reference_table.clone()),
+            )?;
 
             let referenced_column = referenced_table
                 .columns
@@ -393,7 +392,8 @@ impl Database {
         let mut new_primary_key_values: Vec<Value> = Vec::new();
 
         if is_primary_key_column {
-            for pk_value in &table.columns
+            for pk_value in &table
+                .columns
                 .iter()
                 .find(|c| c.name == update_input.0)
                 .unwrap()
@@ -426,7 +426,10 @@ impl Database {
                 );
                 self.update_with_nested_conditions_in_table(
                     &ref_table_name,
-                    (ref_column_name.clone(), new_pk_value.clone().unwrap().to_string()),
+                    (
+                        ref_column_name.clone(),
+                        new_pk_value.clone().unwrap().to_string(),
+                    ),
                     condition,
                 )?;
             }
