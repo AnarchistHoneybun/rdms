@@ -57,6 +57,18 @@ impl Database {
                         fk_info.reference_column.clone(),
                     ));
                 }
+
+                // Check if the referenced column is the primary key column in the referenced table
+                if !referenced_table
+                    .columns
+                    .iter()
+                    .any(|col| col.is_primary_key && col.name == fk_info.reference_column)
+                {
+                    return Err(Error::ReferencedColumnNotPrimaryKey(
+                        fk_info.reference_table.clone(),
+                        fk_info.reference_column.clone(),
+                    ));
+                }
             }
         }
 
