@@ -52,6 +52,7 @@ impl Table {
             name: table_name.to_string(),
             columns,
             primary_key_column,
+            referenced_as_foreign_key: Vec::new(),
         })
     }
 
@@ -88,6 +89,7 @@ impl Table {
                 column.data_type.clone(),
                 None,
                 column.is_primary_key,
+                None,
             );
             new_column.data = column.data.clone();
 
@@ -102,6 +104,7 @@ impl Table {
             name: self.name.clone(),
             columns: new_columns,
             primary_key_column: new_primary_key_column,
+            referenced_as_foreign_key: self.referenced_as_foreign_key.clone(),
         }
     }
 

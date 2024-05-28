@@ -1,15 +1,15 @@
 use crate::column::{Column, ColumnDataType};
-use crate::table::{errors::Error, NestedCondition, Table};
+use crate::table::{table_errors::Error, NestedCondition, Table};
 
 #[test]
 fn test_filter_with_nested_conditions() {
     let mut table = Table::new(
         "test_table",
         vec![
-            Column::new("id", ColumnDataType::Integer, None, false),
-            Column::new("name", ColumnDataType::Text, None, false),
-            Column::new("age", ColumnDataType::Integer, None, false),
-            Column::new("score", ColumnDataType::Float, None, false),
+            Column::new("id", ColumnDataType::Integer, None, false, None),
+            Column::new("name", ColumnDataType::Text, None, false, None),
+            Column::new("age", ColumnDataType::Integer, None, false, None),
+            Column::new("score", ColumnDataType::Float, None, false, None),
         ],
     )
     .unwrap();
@@ -95,10 +95,10 @@ fn test_filter_and_project() {
     let mut table = Table::new(
         "test_table",
         vec![
-            Column::new("id", ColumnDataType::Integer, None, true),
-            Column::new("name", ColumnDataType::Text, None, false),
-            Column::new("age", ColumnDataType::Integer, None, false),
-            Column::new("score", ColumnDataType::Float, None, false),
+            Column::new("id", ColumnDataType::Integer, None, true, None),
+            Column::new("name", ColumnDataType::Text, None, false, None),
+            Column::new("age", ColumnDataType::Integer, None, false, None),
+            Column::new("score", ColumnDataType::Float, None, false, None),
         ],
     )
     .unwrap();

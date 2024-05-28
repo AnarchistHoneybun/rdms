@@ -1,7 +1,15 @@
 # CYPRIOT
 
+![](/public/code_graph.png)
+
+<p align="center">Source code graph made through `dep-tree`</p>
+
+> [!NOTE]
+> Tests and Documentation are not up-to-date.
+> Adding new features, so they might not catch up for a while
+
 An attempt at creating a relational database management system in Rust.  
-Couple of things to note:
+Couple things to note:
 - I don't know why I'm naming this cypriot.
 - I am referring to 0 books and/or papers for this, just pure delusion that I can do this.
 - This project has already made me cry ~~thrice~~ ~~five~~ seven times.
@@ -14,6 +22,7 @@ Currently, what we have is:
 - Functions to:
   - Create a table
   - Assign columns as primary keys (handled during updates, inserts, etc)
+  - Assign columns as foreign keys (handled during updates, inserts, etc. Also cascading updates!)
   - Insert data
     - Whole record at once
     - Only particular columns
@@ -26,7 +35,8 @@ Currently, what we have is:
   - Filter records (can be used with projection)
   - Describe the table
   - Exporting/Importing tables (currently imports only work for the formatting of the export, actively trying to figure out how to standardize them further)
-> **Note:** The tests directory is not included in the repo.
+> [!NOTE]
+> The tests directory is not included in the repo.
 > Please write them yourself while testing or raise an issue if you want me to add them.
 
 ## The Road Ahead

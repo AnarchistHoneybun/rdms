@@ -1,14 +1,14 @@
 use crate::column::{Column, ColumnDataType};
-use crate::table::{errors::Error, Table};
+use crate::table::{table_errors::Error, Table};
 
 #[test]
 fn test_project() {
     let mut table = Table::new(
         "test_table",
         vec![
-            Column::new("id", ColumnDataType::Integer, None, true),
-            Column::new("name", ColumnDataType::Text, None, false),
-            Column::new("score", ColumnDataType::Float, None, false),
+            Column::new("id", ColumnDataType::Integer, None, true, None),
+            Column::new("name", ColumnDataType::Text, None, false, None),
+            Column::new("score", ColumnDataType::Float, None, false, None),
         ],
     )
     .unwrap();
@@ -50,9 +50,9 @@ fn test_column_count() {
     let mut table = Table::new(
         "test_table",
         vec![
-            Column::new("id", ColumnDataType::Integer, None, true),
-            Column::new("name", ColumnDataType::Text, None, false),
-            Column::new("score", ColumnDataType::Float, None, false),
+            Column::new("id", ColumnDataType::Integer, None, true, None),
+            Column::new("name", ColumnDataType::Text, None, false, None),
+            Column::new("score", ColumnDataType::Float, None, false, None),
         ],
     )
     .unwrap();
@@ -101,9 +101,9 @@ fn test_copy() {
     let mut original_table = Table::new(
         "test_table",
         vec![
-            Column::new("id", ColumnDataType::Integer, None, true),
-            Column::new("name", ColumnDataType::Text, None, false),
-            Column::new("score", ColumnDataType::Float, None, false),
+            Column::new("id", ColumnDataType::Integer, None, true, None),
+            Column::new("name", ColumnDataType::Text, None, false, None),
+            Column::new("score", ColumnDataType::Float, None, false, None),
         ],
     )
     .unwrap();
