@@ -5,11 +5,11 @@
 <p align="center">Source code graph made through `dep-tree`</p>
 
 > [!NOTE]
-> Tests and Documentation are not up to date.
-> Adding new features so they might not catch up for a while
+> Tests and Documentation are not up-to-date.
+> Adding new features, so they might not catch up for a while
 
 An attempt at creating a relational database management system in Rust.  
-Couple of things to note:
+Couple things to note:
 - I don't know why I'm naming this cypriot.
 - I am referring to 0 books and/or papers for this, just pure delusion that I can do this.
 - This project has already made me cry ~~thrice~~ ~~five~~ seven times.
@@ -22,6 +22,7 @@ Currently, what we have is:
 - Functions to:
   - Create a table
   - Assign columns as primary keys (handled during updates, inserts, etc)
+  - Assign columns as foreign keys (handled during updates, inserts, etc. Also cascading updates!)
   - Insert data
     - Whole record at once
     - Only particular columns

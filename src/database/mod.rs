@@ -5,8 +5,6 @@ use crate::database::db_errors::Error;
 use crate::table::{table_errors, NestedCondition, Table};
 
 mod db_errors;
-mod helpers;
-mod operators;
 
 pub struct Database {
     pub name: String,
