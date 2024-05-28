@@ -2,13 +2,11 @@ use std::collections::HashMap;
 
 use crate::column::{Column, ColumnDataType, Value};
 use crate::database::db_errors::Error;
-use crate::table::{table_errors, NestedCondition, Table};
+use crate::table::{NestedCondition, Table, table_errors};
 
 mod db_errors;
 mod helpers;
 mod operators;
-
-use helpers::evaluate_nested_conditions;
 
 pub struct Database {
     pub name: String,
@@ -388,6 +386,8 @@ impl Database {
             }
         }
 
+        let table_foreign_key_data = table.referenced_as_foreign_key.clone();
+
         table.update_with_nested_conditions(update_input.clone(), nested_condition)?;
 
         let mut new_primary_key_values: Vec<Value> = Vec::new();
@@ -414,8 +414,23 @@ impl Database {
             .find(|value| !old_primary_key_values.contains(value))
             .cloned();
 
-        dbg!(old_pk_value);
-        dbg!(new_pk_value);
+        dbg!(&old_pk_value);
+        dbg!(&new_pk_value);
+
+        if is_primary_key_column {
+            for (ref_table_name, ref_column_name) in table_foreign_key_data {
+                let condition = NestedCondition::Condition(
+                    ref_column_name.clone(),
+                    "=".to_string(),
+                    old_pk_value.clone().unwrap().to_string(),
+                );
+                self.update_with_nested_conditions_in_table(
+                    &ref_table_name,
+                    (ref_column_name.clone(), new_pk_value.clone().unwrap().to_string()),
+                    condition,
+                )?;
+            }
+        }
 
         Ok(())
     }
