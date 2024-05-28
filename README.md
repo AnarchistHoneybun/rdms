@@ -4,6 +4,10 @@
 
 <p align="center">Source code graph made through `dep-tree`</p>
 
+> [!NOTE]
+> Tests and Documentation are not up to date.
+> Adding new features so they might not catch up for a while
+
 An attempt at creating a relational database management system in Rust.  
 Couple of things to note:
 - I don't know why I'm naming this cypriot.

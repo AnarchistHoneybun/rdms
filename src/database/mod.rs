@@ -2,9 +2,11 @@ use std::collections::HashMap;
 
 use crate::column::{Column, ColumnDataType, Value};
 use crate::database::db_errors::Error;
-use crate::table::{NestedCondition, Table, table_errors};
+use crate::table::{table_errors, NestedCondition, Table};
 
 mod db_errors;
+mod helpers;
+mod operators;
 
 pub struct Database {
     pub name: String,
@@ -60,18 +62,25 @@ impl Database {
             }
         }
 
-        let table= Table::new(table_name, columns).unwrap();
+        let table = Table::new(table_name, columns).unwrap();
+
+        for (column, fk_info) in table
+            .columns
+            .iter()
+            .filter_map(|col| col.foreign_key.as_ref().map(|fk| (col, fk)))
+        {
+            if let Some(referenced_table) = self.tables.get_mut(&fk_info.reference_table) {
+                referenced_table
+                    .referenced_as_foreign_key
+                    .push((table.name.clone(), column.name.clone()));
+            }
+        }
 
         self.tables.insert(table.name.clone(), table);
         Ok(())
     }
 
-    pub fn insert_into_table(
-        &mut self,
-        table_name: &str,
-        data: Vec<String>,
-    ) -> Result<(), Error> {
-
+    pub fn insert_into_table(&mut self, table_name: &str, data: Vec<String>) -> Result<(), Error> {
         let copied_tables = self.tables.clone();
 
         let table = self
@@ -83,10 +92,9 @@ impl Database {
         for (column_idx, value_str) in data.iter().enumerate() {
             let column = &table.columns[column_idx];
             if let Some(fk_info) = &column.foreign_key {
-                let referenced_table = copied_tables
-                    .get(&fk_info.reference_table)
-                    .cloned()
-                    .ok_or(Error::ReferencedTableNotFound(fk_info.reference_table.clone()))?;
+                let referenced_table = copied_tables.get(&fk_info.reference_table).cloned().ok_or(
+                    Error::ReferencedTableNotFound(fk_info.reference_table.clone()),
+                )?;
 
                 let referenced_column = referenced_table
                     .columns
@@ -101,12 +109,16 @@ impl Database {
                     Value::Null
                 } else {
                     match column.data_type {
-                        ColumnDataType::Integer => Value::Integer(value_str.parse().map_err(|_| {
-                            Error::ParseError(column_idx, value_str.to_owned())
-                        })?),
-                        ColumnDataType::Float => Value::Float(value_str.parse().map_err(|_| {
-                            Error::ParseError(column_idx, value_str.to_owned())
-                        })?),
+                        ColumnDataType::Integer => Value::Integer(
+                            value_str
+                                .parse()
+                                .map_err(|_| Error::ParseError(column_idx, value_str.to_owned()))?,
+                        ),
+                        ColumnDataType::Float => Value::Float(
+                            value_str
+                                .parse()
+                                .map_err(|_| Error::ParseError(column_idx, value_str.to_owned()))?,
+                        ),
                         ColumnDataType::Text => Value::Text(value_str.to_owned()),
                     }
                 };
@@ -164,13 +176,14 @@ impl Database {
                 .columns
                 .iter()
                 .find(|col| col.name == *column_name)
-                .ok_or_else(|| Error::TableError(table_errors::Error::NonExistingColumn(column_name.clone())))?;
+                .ok_or_else(|| {
+                    Error::TableError(table_errors::Error::NonExistingColumn(column_name.clone()))
+                })?;
 
             if let Some(fk_info) = &column.foreign_key {
-                let referenced_table = copied_tables
-                    .get(&fk_info.reference_table)
-                    .cloned()
-                    .ok_or(Error::ReferencedTableNotFound(fk_info.reference_table.clone()))?;
+                let referenced_table = copied_tables.get(&fk_info.reference_table).cloned().ok_or(
+                    Error::ReferencedTableNotFound(fk_info.reference_table.clone()),
+                )?;
 
                 let referenced_column = referenced_table
                     .columns
@@ -185,11 +198,19 @@ impl Database {
                     Value::Null
                 } else {
                     match column.data_type {
-                        ColumnDataType::Integer => Value::Integer(value_str.parse().map_err(|_| {
-                            Error::TableError(table_errors::Error::ParseError(column_idx, value_str.to_owned()))
-                        })?),
+                        ColumnDataType::Integer => {
+                            Value::Integer(value_str.parse().map_err(|_| {
+                                Error::TableError(table_errors::Error::ParseError(
+                                    column_idx,
+                                    value_str.to_owned(),
+                                ))
+                            })?)
+                        }
                         ColumnDataType::Float => Value::Float(value_str.parse().map_err(|_| {
-                            Error::TableError(table_errors::Error::ParseError(column_idx, value_str.to_owned()))
+                            Error::TableError(table_errors::Error::ParseError(
+                                column_idx,
+                                value_str.to_owned(),
+                            ))
                         })?),
                         ColumnDataType::Text => Value::Text(value_str.to_owned()),
                     }
@@ -221,7 +242,6 @@ impl Database {
         column_name: &str,
         new_value: &str,
     ) -> Result<(), Error> {
-
         let copied_tables = self.tables.clone();
 
         let table = self
@@ -230,17 +250,19 @@ impl Database {
             .ok_or(Error::TableNotFound(table_name.to_owned()))?;
 
         // Check if the column is a foreign key column
-        let column = table
-            .columns
-            .iter()
-            .find(|c| c.name == column_name)
-            .ok_or(Error::TableError(table_errors::Error::NonExistingColumn(column_name.to_string())))?;
+        let column =
+            table
+                .columns
+                .iter()
+                .find(|c| c.name == column_name)
+                .ok_or(Error::TableError(table_errors::Error::NonExistingColumn(
+                    column_name.to_string(),
+                )))?;
 
         if let Some(fk_info) = &column.foreign_key {
-            let referenced_table = copied_tables
-                .get(&fk_info.reference_table)
-                .cloned()
-                .ok_or(Error::ReferencedTableNotFound(fk_info.reference_table.clone()))?;
+            let referenced_table = copied_tables.get(&fk_info.reference_table).cloned().ok_or(
+                Error::ReferencedTableNotFound(fk_info.reference_table.clone()),
+            )?;
 
             let referenced_column = referenced_table
                 .columns
@@ -302,13 +324,26 @@ impl Database {
             .columns
             .iter()
             .find(|c| c.name == update_input.0)
-            .ok_or(Error::TableError(table_errors::Error::NonExistingColumn(update_input.0.clone())))?;
+            .ok_or(Error::TableError(table_errors::Error::NonExistingColumn(
+                update_input.0.clone(),
+            )))?;
+
+        let is_primary_key_column = update_column.is_primary_key;
+
+        let mut old_primary_key_values: Vec<Value> = Vec::new();
+
+        if is_primary_key_column {
+            for pk_value in &update_column.data {
+                old_primary_key_values.push(pk_value.clone());
+            }
+        }
+
+        //dbg!(&old_primary_key_values);
 
         if let Some(fk_info) = &update_column.foreign_key {
-            let referenced_table = copied_tables
-                .get(&fk_info.reference_table)
-                .cloned()
-                .ok_or(Error::ReferencedTableNotFound(fk_info.reference_table.clone()))?;
+            let referenced_table = copied_tables.get(&fk_info.reference_table).cloned().ok_or(
+                Error::ReferencedTableNotFound(fk_info.reference_table.clone()),
+            )?;
 
             let referenced_column = referenced_table
                 .columns
@@ -350,7 +385,55 @@ impl Database {
             }
         }
 
-        table.update_with_nested_conditions(update_input, nested_condition)?;
+        let table_foreign_key_data = table.referenced_as_foreign_key.clone();
+
+        table.update_with_nested_conditions(update_input.clone(), nested_condition)?;
+
+        let mut new_primary_key_values: Vec<Value> = Vec::new();
+
+        if is_primary_key_column {
+            for pk_value in &table
+                .columns
+                .iter()
+                .find(|c| c.name == update_input.0)
+                .unwrap()
+                .data
+            {
+                new_primary_key_values.push(pk_value.clone());
+            }
+        }
+        //dbg!(&new_primary_key_values);
+
+        let old_pk_value = old_primary_key_values
+            .iter()
+            .find(|value| !new_primary_key_values.contains(value))
+            .cloned();
+
+        let new_pk_value = new_primary_key_values
+            .iter()
+            .find(|value| !old_primary_key_values.contains(value))
+            .cloned();
+
+        //dbg!(&old_pk_value);
+        //dbg!(&new_pk_value);
+
+        if is_primary_key_column {
+            for (ref_table_name, ref_column_name) in table_foreign_key_data {
+                let condition = NestedCondition::Condition(
+                    ref_column_name.clone(),
+                    "=".to_string(),
+                    old_pk_value.clone().unwrap().to_string(),
+                );
+                self.update_with_nested_conditions_in_table(
+                    &ref_table_name,
+                    (
+                        ref_column_name.clone(),
+                        new_pk_value.clone().unwrap().to_string(),
+                    ),
+                    condition,
+                )?;
+            }
+        }
 
         Ok(())
     }

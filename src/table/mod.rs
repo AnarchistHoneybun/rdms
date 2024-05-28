@@ -2,7 +2,7 @@ mod export_import;
 mod filter_funcs;
 mod helpers;
 mod insert_funcs;
-mod operators;
+pub(crate) mod operators;
 pub(crate) mod table_errors;
 mod table_utils;
 mod update_funcs;
@@ -24,4 +24,5 @@ pub struct Table {
     pub(crate) name: String,
     pub(crate) columns: Vec<Column>,
     pub(crate) primary_key_column: Option<Column>,
+    pub(crate) referenced_as_foreign_key: Vec<(String, String)>,
 }

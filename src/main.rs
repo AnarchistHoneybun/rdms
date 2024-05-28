@@ -5,7 +5,6 @@ mod column;
 mod table;
 
 mod database;
-#[cfg(test)]
 mod tests;
 
 fn main() {
@@ -18,7 +17,6 @@ fn main() {
     ];
 
     db.create_table("users", columns).unwrap();
-
 
     let users_data = vec![
         vec!["1".to_string(), "Alice".to_string(), "30".to_string()],
@@ -36,15 +34,12 @@ fn main() {
         table.show();
     }
 
-
-
-
     let columns = vec![
         Column::new(
             "user_id",
             ColumnDataType::Integer,
             None,
-            false,
+            true,
             ForeignKeyInfo::new("users", "id").into(),
         ),
         Column::new("address", ColumnDataType::Text, None, false, None),
@@ -52,10 +47,10 @@ fn main() {
 
     db.create_table("addresses", columns).unwrap();
 
-
     // add some data to addresses table
     let addresses_data = vec![
         vec!["3".to_string(), "123 Main St.".to_string()],
+        vec!["3".to_string(), "666 Pain St.".to_string()],
         vec!["4".to_string(), "456 Elm St.".to_string()],
         vec!["2".to_string(), "789 Maple St.".to_string()],
     ];
@@ -65,7 +60,11 @@ fn main() {
         }
     }
 
-    if let Err(err) = db.insert_with_columns_into_table("addresses", vec!["address".to_string()], vec!["999 Oak St.".to_string()]) {
+    if let Err(err) = db.insert_with_columns_into_table(
+        "addresses",
+        vec!["address".to_string()],
+        vec!["999 Oak St.".to_string()],
+    ) {
         eprintln!("Error inserting data: {}", err);
     }
 
@@ -79,22 +78,34 @@ fn main() {
     }
 
     // Update the "address" column with "999 Oak St." for records where "user_id" is 3
-    let nested_condition = NestedCondition::Condition(
-        "user_id".to_string(),
-        "=".to_string(),
-        "3".to_string(),
-    );
+    let nested_condition =
+        NestedCondition::Condition("user_id".to_string(), "=".to_string(), "3".to_string());
     db.update_with_nested_conditions_in_table(
         "addresses",
         ("address".to_string(), "999 Oak St.".to_string()),
         nested_condition,
     )
-        .unwrap();
+    .unwrap();
 
     // Print the table
     if let Some(table) = db.get_table("addresses") {
         table.show();
     }
 
+    let nested_condition =
+        NestedCondition::Condition("user_name".to_string(), "=".to_string(), "Bob".to_string());
+    db.update_with_nested_conditions_in_table(
+        "users",
+        ("id".to_string(), "31".to_string()),
+        nested_condition,
+    )
+    .unwrap();
 
+    // Print the table
+    if let Some(table) = db.get_table("users") {
+        table.show();
+    }
+    if let Some(table) = db.get_table("addresses") {
+        table.show();
+    }
 }

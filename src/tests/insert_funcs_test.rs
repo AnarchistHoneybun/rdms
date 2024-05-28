@@ -6,9 +6,9 @@ fn test_insert() {
     let mut table = Table::new(
         "test_table",
         vec![
-            Column::new("id", ColumnDataType::Integer, None, true),
-            Column::new("name", ColumnDataType::Text, None, false),
-            Column::new("score", ColumnDataType::Float, None, false),
+            Column::new("id", ColumnDataType::Integer, None, true, None),
+            Column::new("name", ColumnDataType::Text, None, false, None),
+            Column::new("score", ColumnDataType::Float, None, false, None),
         ],
     )
     .unwrap();
@@ -58,9 +58,9 @@ fn test_insert_with_columns() {
     let mut table = Table::new(
         "test_table",
         vec![
-            Column::new("id", ColumnDataType::Integer, None, true),
-            Column::new("name", ColumnDataType::Text, None, false),
-            Column::new("score", ColumnDataType::Float, None, false),
+            Column::new("id", ColumnDataType::Integer, None, true, None),
+            Column::new("name", ColumnDataType::Text, None, false, None),
+            Column::new("score", ColumnDataType::Float, None, false, None),
         ],
     )
     .unwrap();
