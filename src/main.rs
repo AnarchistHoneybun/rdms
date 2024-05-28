@@ -3,7 +3,6 @@ use crate::table::NestedCondition;
 
 mod column;
 mod table;
-
 mod database;
 #[cfg(test)]
 mod tests;
