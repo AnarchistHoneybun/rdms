@@ -338,7 +338,7 @@ impl Database {
             }
         }
 
-        dbg!(&old_primary_key_values);
+        //dbg!(&old_primary_key_values);
 
         if let Some(fk_info) = &update_column.foreign_key {
             let referenced_table = copied_tables.get(&fk_info.reference_table).cloned().ok_or(
@@ -402,7 +402,7 @@ impl Database {
                 new_primary_key_values.push(pk_value.clone());
             }
         }
-        dbg!(&new_primary_key_values);
+        //dbg!(&new_primary_key_values);
 
         let old_pk_value = old_primary_key_values
             .iter()
@@ -414,8 +414,8 @@ impl Database {
             .find(|value| !old_primary_key_values.contains(value))
             .cloned();
 
-        dbg!(&old_pk_value);
-        dbg!(&new_pk_value);
+        //dbg!(&old_pk_value);
+        //dbg!(&new_pk_value);
 
         if is_primary_key_column {
             for (ref_table_name, ref_column_name) in table_foreign_key_data {

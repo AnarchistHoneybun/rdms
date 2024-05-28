@@ -39,7 +39,7 @@ fn main() {
             "user_id",
             ColumnDataType::Integer,
             None,
-            false,
+            true,
             ForeignKeyInfo::new("users", "id").into(),
         ),
         Column::new("address", ColumnDataType::Text, None, false, None),
@@ -50,6 +50,7 @@ fn main() {
     // add some data to addresses table
     let addresses_data = vec![
         vec!["3".to_string(), "123 Main St.".to_string()],
+        vec!["3".to_string(), "666 Pain St.".to_string()],
         vec!["4".to_string(), "456 Elm St.".to_string()],
         vec!["2".to_string(), "789 Maple St.".to_string()],
     ];
