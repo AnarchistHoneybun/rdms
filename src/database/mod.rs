@@ -328,6 +328,20 @@ impl Database {
             .find(|c| c.name == update_input.0)
             .ok_or(Error::TableError(table_errors::Error::NonExistingColumn(update_input.0.clone())))?;
 
+        let is_primary_key_column = update_column.is_primary_key;
+
+        let mut old_primary_key_values: Vec<Value> = Vec::new();
+
+        if is_primary_key_column {
+            for pk_value in &update_column.data {
+                old_primary_key_values.push(pk_value.clone());
+            }
+        }
+
+        dbg!(&old_primary_key_values);
+
+
+
         if let Some(fk_info) = &update_column.foreign_key {
             let referenced_table = copied_tables
                 .get(&fk_info.reference_table)
@@ -374,7 +388,34 @@ impl Database {
             }
         }
 
-        table.update_with_nested_conditions(update_input, nested_condition)?;
+        table.update_with_nested_conditions(update_input.clone(), nested_condition)?;
+
+        let mut new_primary_key_values: Vec<Value> = Vec::new();
+
+        if is_primary_key_column {
+            for pk_value in &table.columns
+                .iter()
+                .find(|c| c.name == update_input.0)
+                .unwrap()
+                .data
+            {
+                new_primary_key_values.push(pk_value.clone());
+            }
+        }
+        dbg!(&new_primary_key_values);
+
+        let old_pk_value = old_primary_key_values
+            .iter()
+            .find(|value| !new_primary_key_values.contains(value))
+            .cloned();
+
+        let new_pk_value = new_primary_key_values
+            .iter()
+            .find(|value| !old_primary_key_values.contains(value))
+            .cloned();
+
+        dbg!(old_pk_value);
+        dbg!(new_pk_value);
 
         Ok(())
     }
