@@ -2,8 +2,8 @@ use crate::column::{Column, ColumnDataType, ForeignKeyInfo};
 use crate::table::NestedCondition;
 
 mod column;
-mod table;
 mod database;
+mod table;
 #[cfg(test)]
 mod tests;
 
