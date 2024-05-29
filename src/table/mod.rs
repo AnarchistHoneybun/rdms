@@ -1,3 +1,4 @@
+mod delete_funcs;
 mod export_import;
 mod filter_funcs;
 mod helpers;
@@ -6,7 +7,6 @@ pub(crate) mod operators;
 pub(crate) mod table_errors;
 mod table_utils;
 mod update_funcs;
-mod delete_funcs;
 
 use crate::column::Column;
 use crate::table::table_errors::Error;

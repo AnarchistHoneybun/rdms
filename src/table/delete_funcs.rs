@@ -2,7 +2,10 @@ use crate::table::helpers::evaluate_nested_conditions;
 use crate::table::{Error, NestedCondition, Table};
 
 impl Table {
-    pub fn delete_with_nested_conditions(&mut self, nested_condition: &NestedCondition) -> Result<(), Error> {
+    pub fn delete_with_nested_conditions(
+        &mut self,
+        nested_condition: &NestedCondition,
+    ) -> Result<(), Error> {
         let mut rows_to_remove = Vec::new();
 
         for row_idx in 0..self.columns[0].data.len() {
@@ -11,11 +14,13 @@ impl Table {
             }
         }
 
-        dbg!(rows_to_remove);
+        // dbg!(&rows_to_remove);
 
         // Remove rows from each column's data vector
         for col in &mut self.columns {
-            col.data.retain(|_, idx| !rows_to_remove.contains(&idx));
+            for row_idx in rows_to_remove.iter() {
+                col.data.remove(*row_idx);
+            }
         }
 
         Ok(())
