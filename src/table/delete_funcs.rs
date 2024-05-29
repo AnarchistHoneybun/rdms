@@ -17,9 +17,12 @@ impl Table {
         // dbg!(&rows_to_remove);
 
         for col in &mut self.columns {
-            for row_idx in rows_to_remove.iter() {
-                col.data.remove(*row_idx);
-            }
+            let mut i = 0usize;
+            col.data.retain(|_| {
+                let keep = !rows_to_remove.contains(&i);
+                i += 1;
+                keep
+            });
         }
 
         Ok(())
