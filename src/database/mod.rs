@@ -448,6 +448,21 @@ impl Database {
         Ok(())
     }
 
+    pub fn delete_with_nested_conditions_in_table(
+        &mut self,
+        table_name: &str,
+        nested_condition: NestedCondition,
+    ) -> Result<(), Error> {
+        let table = self
+            .tables
+            .get_mut(table_name)
+            .ok_or(Error::TableNotFound(table_name.to_owned()))?;
+
+        table.delete_with_nested_conditions(&nested_condition)?;
+
+        Ok(())
+    }
+
     pub fn get_table(&self, table_name: &str) -> Option<&Table> {
         self.tables.get(table_name)
     }

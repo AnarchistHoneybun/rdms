@@ -16,7 +16,6 @@ impl Table {
 
         // dbg!(&rows_to_remove);
 
-        // Remove rows from each column's data vector
         for col in &mut self.columns {
             for row_idx in rows_to_remove.iter() {
                 col.data.remove(*row_idx);
