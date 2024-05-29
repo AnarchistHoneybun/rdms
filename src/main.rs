@@ -111,7 +111,7 @@ fn main() {
 
     if let Some(table) = db.get_table_mut("addresses") {
         let nested_condition = NestedCondition::Condition("user_id".to_string(), "=".to_string(), "3".to_string());
-        table.delete_with_nested_conditions(nested_condition).unwrap();
+        table.delete_with_nested_conditions(&nested_condition).unwrap();
     }
 
 }
