@@ -29,6 +29,8 @@ Currently, what we have is:
   - Update data
     - Blanket update on a column
     - Update a specific entry, conditional on multiple columns
+  - Delete data
+    - Delete records from a table meeting specific conditions
   - Project from table
     - Entire table at once
     - Specific columns
