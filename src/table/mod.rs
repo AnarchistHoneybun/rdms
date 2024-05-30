@@ -1,7 +1,7 @@
 mod delete_funcs;
 mod export_import;
 mod filter_funcs;
-mod helpers;
+pub(crate) mod helpers;
 mod insert_funcs;
 pub(crate) mod operators;
 pub(crate) mod table_errors;

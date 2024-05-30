@@ -109,11 +109,15 @@ fn main() {
         table.show();
     }
 
-    let nested_condition = NestedCondition::Condition("user_id".to_string(), "=".to_string(), "3".to_string());
-    if let Err(err) = db.delete_with_nested_conditions_in_table("addresses", nested_condition) {
+    let nested_condition =
+        NestedCondition::Condition("id".to_string(), "=".to_string(), "3".to_string());
+    if let Err(err) = db.delete_with_nested_conditions_in_table("users", nested_condition) {
         eprintln!("Error deleting data: {}", err);
     }
 
+    if let Some(table) = db.get_table("users") {
+        table.show();
+    }
     if let Some(table) = db.get_table("addresses") {
         table.show();
     }
