@@ -23,12 +23,16 @@ Currently, what we have is:
   - Create a table
   - Assign columns as primary keys (handled during updates, inserts, etc)
   - Assign columns as foreign keys (handled during updates, inserts, etc. Also cascading updates!)
+    - Currently foreign key connections are only allowed on primary key fields
   - Insert data
     - Whole record at once
     - Only particular columns
   - Update data
     - Blanket update on a column
     - Update a specific entry, conditional on multiple columns
+  - Delete data
+    - Delete records from a table meeting specific conditions
+    - Both this and update cascade their changes to downstream referencing tables
   - Project from table
     - Entire table at once
     - Specific columns

@@ -14,6 +14,8 @@ pub enum Error {
     ParseError(usize, String),
     TableError(table_errors::Error),
     ReferencedColumnNotPrimaryKey(String, String),
+    NoPrimaryKeyColumn(String),
+    MissingPrimaryKeyValue,
 }
 
 impl std::fmt::Display for Error {
@@ -69,6 +71,12 @@ impl std::fmt::Display for Error {
                     "Referenced column '{}' in table '{}' is not a primary key",
                     column_name, table_name
                 )
+            }
+            Error::NoPrimaryKeyColumn(table_name) => {
+                write!(f, "No primary key column found in table '{}'", table_name)
+            }
+            Error::MissingPrimaryKeyValue => {
+                write!(f, "Primary key value not provided")
             }
         }
     }
